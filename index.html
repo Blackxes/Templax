@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="de">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<title>{{ title }}</title>
+
+		<style>
+			html, body { margin: 0; padding: 0; font-size: 16px; font-family: "Verdana"; }
+			h1 { text-align: center; }
+			#app { margin: 0 auto; max-width: 800px; }
+		</style>
+	</head>
+	<body>
+		<div id="app">
+			<h1>Templax examples</h1>
+			<ul>
+			{{ foreach: examples }}
+				<li>
+					<a href="{{ path }}">{{ title }}</a>
+				</li>
+			{{ foreach end: examples }}
+			</ul>
+		</div>
+	</body>
+</html>
