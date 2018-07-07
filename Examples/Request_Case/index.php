@@ -23,10 +23,12 @@ require_once ( "../../Templax/Templax.php" );
 	);
 
 	$markup = array(
-		"page-title" => "Basic Marker Use",
-		"framework" => function() { return "Templax"; },
-		"version" => "x.x.x",
-		"description" => "This framework is an adaption of the javascript template framework js_Templax but written in php"
+		"page-title" => "Request Case",
+		"image" => array(
+			"source" => "http://via.placeholder.com/120x120",
+		),
+		"firstname" => "Alexander",
+		"lastname" => false
 	);
 
 	$content = \Templax\Templax::parse("base", $markup);

@@ -179,6 +179,11 @@ class Templax {
 			$process->setCurrentQuery( $query );
 			
 			$response = self::reviewResponse( $process, $callback( $query ) );
+
+			// display error of the parsing
+			foreach( \Templax\Templax::$log->getOpenLogs() as $index => $log )
+				print_r( "\n" . $log->getMessage() );
+
 			// adjust offset to ensure to not parse any post queries or unecessary strings
 			// when a postquery is set usually a offset is defined - so consinder that one too
 			$offset = $iterator + ( ($response->hasOffset()) ? $response->getOffset() : strlen($response->getReplacement()) );

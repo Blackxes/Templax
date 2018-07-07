@@ -74,8 +74,12 @@ class RequestParser {
 		if ( !$query->getOption("render") || !is_array($query->getValue()) )
 			return new \Templax\Source\Models\Response( $templateMatch[0], "" );
 
-		foreach( $query->getValue() as $index => $markup )
-			$content .= \Templax\Templax::parse( $templateMatch[1], $markup );
+		foreach( $query->getValue() as $index => $markup ) {
+
+			$content .= \Templax\Templax::parse(
+				$templateMatch[1], is_array( $markup ) ? $markup : array()
+			);
+		}
 		
 		return new \Templax\Source\Models\Response( $templateMatch[0], $content );
 	}
@@ -163,7 +167,11 @@ class RequestParser {
 			return new \Templax\Source\Models\Response( ($templateMatch) ? $templateMatch[0] : $query->getRawRule(), "" );
 		
 		$markup = $query->getValue();
-		$content = \Templax\Parser::parse( $templateMatch[1], (is_array($markup)) ? $markup : array() );		
+
+		// when the markup is not an array define the value in the markup as the key itself
+		$content = \Templax\Templax::parse(
+			$templateMatch[1], ( is_array($markup) ) ? $markup : array( $query->getKey() => $markup)
+		);
 
 		return new \Templax\Source\Models\Response( $templateMatch[0], $content );
 	}
