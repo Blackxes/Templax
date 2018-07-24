@@ -13,7 +13,7 @@
 
 namespace Templax\Source\Models;
 
-require_once ( TEMPLAX_ROOT . DS . "Source" . DS . "Manager" . DS . "TemplateManager.php" );
+require_once ( TEMPLAX_ROOT . "/Source/Manager/TemplateManager.php" );
 
 //_____________________________________________________________________________________________
 class Template {

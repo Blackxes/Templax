@@ -13,7 +13,7 @@
 
 namespace Templax\Source\Manager;
 
-require_once ( TEMPLAX_ROOT . DS . "Source" . DS . "Models" . DS . "Process.php" );
+require_once ( TEMPLAX_ROOT . "/Source/Models/Process.php" );
 
 //_____________________________________________________________________________________________
 class ProcessManager {

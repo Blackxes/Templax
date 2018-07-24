@@ -13,7 +13,7 @@
 
 namespace Templax\Source\Parser;
 
-require_once ( TEMPLAX_ROOT . DS . "Source" . DS . "Models" . DS . "Rule.php" );
+require_once ( TEMPLAX_ROOT ."/Source/Models/Rule.php" );
 
 //_____________________________________________________________________________________________
 class RuleParser {
@@ -70,6 +70,7 @@ class RuleParser {
 		// process values of the arrays which can be callables
 		$rule->setOptions( self::resolveValues($options) );
 		$rule->setValue( self::resolveValues($requestValue) );
+		$rule->setCommandValue( self::resolveValues($queryMarkup[ $rule->getRequest() . "-" . $rule->getKey()]) );
 
 		return $rule;
 	}

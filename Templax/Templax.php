@@ -17,27 +17,15 @@ error_reporting ( E_ALL & ~E_NOTICE );
 
 
 define( "TEMPLAX_ROOT", __DIR__, true );
-define( "DS", DIRECTORY_SEPARATOR, true);
 
-require_once ( TEMPLAX_ROOT . DS . "Dependencies" . DS . "Logfile" . DS . "Logfile.php" );
+require_once ( TEMPLAX_ROOT . "/Dependencies/Logfile/Logfile.php" );
 
-require_once ( TEMPLAX_ROOT . DS . "Config.php" );
-require_once ( TEMPLAX_ROOT . DS . "Source" . DS . "Manager" . DS . "ProcessManager.php" );
-require_once ( TEMPLAX_ROOT . DS . "Source" . DS . "Manager" . DS . "TemplateManager.php" );
-require_once ( TEMPLAX_ROOT . DS . "Source" . DS . "Parser" . DS . "RequestParser.php" );
-require_once ( TEMPLAX_ROOT . DS . "Source" . DS . "Parser" . DS . "RuleParser.php" );
-require_once ( TEMPLAX_ROOT . DS . "Source" . DS . "Models" . DS . "Query.php" );
-
-
-function debug($value) {
-	print_r("\n" . $value);
-}
-
-function pdebug( $value ) {
-	echo '<pre>';
-		print_r($value);
-	echo '</pre>';
-}
+require_once ( TEMPLAX_ROOT . "/Config.php" );
+require_once ( TEMPLAX_ROOT . "/Source/Manager/ProcessManager.php" );
+require_once ( TEMPLAX_ROOT . "/Source/Manager/TemplateManager.php" );
+require_once ( TEMPLAX_ROOT . "/Source/Parser/RequestParser.php" );
+require_once ( TEMPLAX_ROOT . "/Source/Parser/RuleParser.php" );
+require_once ( TEMPLAX_ROOT . "/Source/Models/Query.php" );
 
 //_____________________________________________________________________________________________
 class Templax {
@@ -50,7 +38,7 @@ class Templax {
 	static private $defaultMarkup = array();
 	static private $defaultOptions = array();
 
-	static public $log = null;
+	static public $logfile = null;
 
 	//_________________________________________________________________________________________
 	// defines the parser with the given values
@@ -72,7 +60,7 @@ class Templax {
 			self::$pManager = new \Templax\Source\Manager\ProcessManager();
 		}
 		
-		self::$log = new \Logfile\Logfile;
+		self::$logfile = new \Logfile\Logfile;
 		self::$defaultMarkup = $defaultMarkup;
 		self::$defaultOptions = $defaultOptions;
 
@@ -100,7 +88,11 @@ class Templax {
 
 		$content = self::processTemplate( $pSet["template"], $pSet["markup"], $pSet["options"], function( $query ) {
 			return \Templax\Source\Parser\RequestParser::parse( $query );
-		});		
+		});
+
+		// display error of the parsing
+		foreach( \Templax\Templax::$logfile->getOpenLogs() as $index => $log )
+			print_r( "\n" . $log->getMessage() );
 
 		return $content;
 	}
@@ -116,7 +108,8 @@ class Templax {
 	//
 	static private function verifyParsingSet( $templateId, array $markup ) {
 
-		// Todo: implement functionality that defaults are applied => markup/options		
+
+		// implement functionality that defaults are applied => markup/options
 		$parsingSet = array(
 			"template" => ( self::$tManager->has($templateId) )
 				? self::$tManager->get( $templateId )
@@ -150,7 +143,7 @@ class Templax {
 
 		// register current template
 		$process = self::$pManager->create( $template, $_markup, $options );
-		$process->setQueryMarkup( array_merge(self::buildBaseMarkup($process), $_markup) );
+		$process->setQueryMarkup( array_merge(self::buildBaseMarkup($process), $template->getMarkup(), $_markup) );
 		
 		if ( !$process->getOption("render") )
 			return "";
@@ -175,14 +168,10 @@ class Templax {
 
 			// to avoid conflicts width post query request only the content
 			// in the current context will be passed
-			$query = new \Templax\Source\Models\Query( $process->getId(), $rule, substr($queryingTemplate, $offset), false );
+			$query = new \Templax\Source\Models\Query( $process, $rule, substr($queryingTemplate, $offset), false );
 			$process->setCurrentQuery( $query );
 			
 			$response = self::reviewResponse( $process, $callback( $query ) );
-
-			// display error of the parsing
-			foreach( \Templax\Templax::$log->getOpenLogs() as $index => $log )
-				print_r( "\n" . $log->getMessage() );
 
 			// adjust offset to ensure to not parse any post queries or unecessary strings
 			// when a postquery is set usually a offset is defined - so consinder that one too
@@ -272,7 +261,7 @@ class Templax {
 		$markup = array_merge(
 			self::$defaultMarkup,
 			array(
-				"hp-template" => $process->getTemplate()->getId()
+				"tx-template" => $process->getTemplate()->getId()
 			),
 			$process->getUserMarkup()
 		);

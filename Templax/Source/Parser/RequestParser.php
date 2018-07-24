@@ -14,8 +14,8 @@
 
 namespace Templax\Source\Parser;
 
-require_once ( TEMPLAX_ROOT . DS . "Templax.php" );
-require_once ( TEMPLAX_ROOT . DS . "Source" . DS . "Models" . DS . "Response.php" );
+require_once ( TEMPLAX_ROOT . "/Templax.php" );
+require_once ( TEMPLAX_ROOT . "/Source/Models/Response.php" );
 
 //_____________________________________________________________________________________________
 class RequestParser {
@@ -174,6 +174,34 @@ class RequestParser {
 		);
 
 		return new \Templax\Source\Models\Response( $templateMatch[0], $content );
+	}
+
+	//_________________________________________________________________________________________
+	// parses the part within the if command when the key within the markup returns true
+	//
+	// param1 (\Templax\Source\Models\Query) expects the query
+	//
+	// return \Templax\Source\Models\Response
+	//
+	static public function if ( \Templax\Source\Models\Query $query ) {
+
+		if ( !$query->getKey() )
+			return new \Templax\Source\Models\Response();
+		
+		preg_match($GLOBALS["Templax"]["CONFIG"]["REGEX"]["extractArea"]( $query ),
+		$query->getTemplate(), $templateMatch);
+
+		if ( !$query->getProcess()->getQueryMarkup()[ $query->getKey() ] )
+			return new \Templax\Source\Models\Response( ($templateMatch) ? $templateMatch[0] : $query->getRawRule(), "" );
+		
+		$markup = $query->getCommandValue();
+		$content = \Templax\Templax::parse(
+			$templateMatch[1],
+			is_array($markup) ? $markup : array()
+		);
+
+		return new \Templax\Source\Models\Response( $templateMatch[0], $content );
+		
 	}
 }
 

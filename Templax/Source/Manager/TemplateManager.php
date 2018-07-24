@@ -13,12 +13,7 @@
 
 namespace Templax\Source\Manager;
 
-require_once ( TEMPLAX_ROOT . DS . "Source" . DS . "Models" . DS . "Template.php" );
-
-function debug($value) {
-	print_r($value);
-	print_r("\n");
-}
+require_once ( TEMPLAX_ROOT . "/Source/Models/Template.php" );
 
 //_____________________________________________________________________________________________
 class TemplateManager {
@@ -85,7 +80,7 @@ class TemplateManager {
 		}
 
 		// print error logs
-		foreach( \Templax\Templax::$log->getOpenLogs() as $index => $log )
+		foreach( \Templax\Templax::$logfile->getOpenLogs() as $index => $log )
 			print_r( "\n" . $log->getMessage() );
 
 		return true;
