@@ -152,11 +152,14 @@ class RequestParser {
 	// uses the template given in the markup / when template not found
 	// its replaced with an empty string
 	//
+	// param1 (\Templax\Source\Models\Query) expects the query
+	//
+	// return \Templax\Source\Models\Response
+	//
 	static public function templateSelect( \Templax\Source\Models\Query $query ) {
 
 		if ( !$query->getKey() )
 			return new \Templax\Source\Models\Response();
-			
 		
 		preg_match($GLOBALS["Templax"]["CONFIG"]["REGEX"]["extractArea"]( $query ),
 			$query->getTemplate(), $templateMatch);
