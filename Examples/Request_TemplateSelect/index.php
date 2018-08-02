@@ -19,20 +19,26 @@ require_once ( "../../Templax/Templax.php" );
 	// load template
 	\Templax\Templax::define(
 		array(
-			"base" => __DIR__ . "/index.html"
+			"base" => array( "path" => __DIR__ . "/index.html", "marker" => "base" ),
+			"logged_in" => array( "path" => __DIR__ . "/index.html", "marker" => "logged_in" ),
+			"logged_out" => array( "path" => __DIR__ . "/index.html", "marker" => "logged_out" )
 		)
 	);
 
+	// the key "login-status" defines the template
+	// change it back and forth between "logged_in" and "logged_out"
+	// and the parser uses the template defined under the value
+	//
+	// when the template is not found an empty string is used
+	//
 	$markup = array(
-		"page-title" => "Request Case",
-		"image" => array(
-			"source" => "http://via.placeholder.com/120x120",
-		),
-		"firstname" => "Alexander",
-		"lastname" => false
+		"login-status" => "logged_in",
+		"templateSelect-login-status" => array(
+			"user" => "Blackxes"
+		)
 	);
 
-	$content = \Templax\Templax::parse("base", $markup);
+	$content = \Templax\Templax::parse( "base", $markup );
 	echo $content;
 
 //_____________________________________________________________________________________________

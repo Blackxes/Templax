@@ -18,8 +18,6 @@ error_reporting ( E_ALL & ~E_NOTICE );
 
 define( "TEMPLAX_ROOT", __DIR__, true );
 
-require_once ( TEMPLAX_ROOT . "/Dependencies/Logfile/Logfile.php" );
-
 require_once ( TEMPLAX_ROOT . "/Config.php" );
 require_once ( TEMPLAX_ROOT . "/Source/Manager/ProcessManager.php" );
 require_once ( TEMPLAX_ROOT . "/Source/Manager/TemplateManager.php" );
@@ -49,6 +47,10 @@ class Templax {
 	//		markup to the parsing function
 	// param3 (array) expects the default option set / values will be overwritten when passing
 	//		a option set to the parsing function
+	//
+	// return boolean
+	//		true - when defined
+	//		false - invalid values/ missing dependencies
 	// 
 	static public function define(
 		array $templates,
@@ -60,11 +62,18 @@ class Templax {
 			self::$pManager = new \Templax\Source\Manager\ProcessManager();
 		}
 		
+		print_r(self::$logfile);
+		
+		if ( !class_exists("Logfile\Logfile") )
+			return false;
+		
 		self::$logfile = new \Logfile\Logfile;
 		self::$defaultMarkup = $defaultMarkup;
 		self::$defaultOptions = $defaultOptions;
 
 		self::$tManager->registerTemplateSet( $templates );
+		
+		self::$defined = true;
 	}
 
 	//_________________________________________________________________________________________
@@ -83,6 +92,9 @@ class Templax {
 
 		if ( !self::$tManager || !self::$pManager )
 			return "Please call the '::define()' function to initially define the parser";
+		
+		if ( !self::$defined )
+			return "Please check the dependencies or defined values you passed to define()";
 
 		$pSet = self::verifyParsingSet( $id, $markup );
 

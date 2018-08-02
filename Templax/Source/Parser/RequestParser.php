@@ -149,6 +149,31 @@ class RequestParser {
 	}
 
 	//_________________________________________________________________________________________
+	// uses the template given in the markup / when template not found
+	// its replaced with an empty string
+	//
+	static public function templateSelect( \Templax\Source\Models\Query $query ) {
+
+		if ( !$query->getKey() )
+			return new \Templax\Source\Models\Response();
+			
+		
+		preg_match($GLOBALS["Templax"]["CONFIG"]["REGEX"]["extractArea"]( $query ),
+			$query->getTemplate(), $templateMatch);
+		
+		if ( !\Templax\Templax::hasTemplate($query->getValue()) )
+			return new \Templax\Source\Models\Response( ($templateMatch) ? $templateMatch[0] : $query->getRawRule(), "" );
+		
+		$markup = $query->getCommandValue();
+		$content = \Templax\Templax::parse(
+			$query->getValue(),
+			is_array($markup) ? $markup : array()
+		);
+
+		return new \Templax\Source\Models\Response( $templateMatch[0], $content );
+	}
+
+	//_________________________________________________________________________________________
 	// parses the part within the case command when the requested key is not null or false
 	//
 	// param1 (\Templax\Source\Models\Query) expects the query
