@@ -13,6 +13,8 @@
 
 namespace Templax\Source\Manager;
 
+use \Templax\Source\Models;
+
 require_once ( TEMPLAX_ROOT . "/Source/Models/Template.php" );
 
 //_____________________________________________________________________________________________
@@ -20,8 +22,6 @@ class TemplateManager {
 
 	private $templates;
 	private $fileCache; // stores already streamed files
-
-	public $lastRegistrationError;
 
 	//_________________________________________________________________________________________
 	//
@@ -57,10 +57,9 @@ class TemplateManager {
 	//
 	// content of files are being cached in order to avoid unecessary file streaming
 	//
-	public function registerTemplateSet( array $templates ) {
+	public function registerTemplateSet( array $templates ): bool {
 
-		if ( !$templates )
-			return false;
+		if ( !$templates ) return false;
 
 		foreach( $templates as $id => $config ) {
 
@@ -80,8 +79,9 @@ class TemplateManager {
 		}
 
 		// print error logs
-		foreach( \Templax\Templax::$logfile->getOpenLogs() as $index => $log )
-			print_r( "\n" . $log->getMessage() );
+		if ( $GLOBALS["Templax"]["Configuration"]["Debugging"]["PrintErrors"] )
+			foreach( \Templax\Templax::$logfile->getOpenLogs() as $index => $log )
+				print_r( "\n" . $log->getMessage() );
 
 		return true;
 	}
@@ -92,8 +92,12 @@ class TemplateManager {
 	// param1 ( \Templax\Source\Models\Template ) expects the template instance
 	//
 	// return boolean
+	//		true - when the template instance has been registered
+	//		false - when the temlate already exists
+	//			the template has no id
+	//			the template is null	
 	//
-	public function registerTemplateInstance( \Templax\Source\Models\Template $template ) {
+	public function registerTemplateInstance( Models\Template $template ): bool {
 
 		if ( $template == null || !$template->getId() || $this->has($template->getId()) )
 			return false;
@@ -117,18 +121,19 @@ class TemplateManager {
 	// param4 (array) expects the default options
 	//
 	// return boolean
+	//		true - when the template has been registered
+	//		false - when the template contains invalid values / eg. no id
+	//			when the template already exists
 	//
-	public function register( $id, $filePath, $marker = "", array $markup = array(), array $options = array()) {
+	public function register( $id, $filePath, $marker = "", array $markup = array(),
+		array $options = array()): bool
+	{
 
-		if ( !$id || !$filePath || $this->has($id) ) {
-			$this->lastRegistrationError = "invalid values for template (id/config)";
-			return false;
-		}
+		if ( !$id || !$filePath || $this->has($id) )
+			return \Templax\Templax::$logfile->logReturn( "invalid values for template (id/config)", false );
 
-		if ( $this->has($id) ) {
-			$this->lastRegistrationError = "template {$id} already registered";
-			return false;
-		}
+		if ( $this->has($id) )
+			return \Templax\Templax::$logfile->logReturn( "template {$id} already registered", false );
 
 		// using key and end avoids errors when trying to access array indecies
 		// this only works because the array contains only 2 values
@@ -136,7 +141,7 @@ class TemplateManager {
 			? $this->extractTemplate( $filePath, $marker )
 			: $this->getFileTemplate( $filePath );
 		
-		$template = new \Templax\Source\Models\Template( $id, $templateString, $options );
+		$template = new Models\Template( $id, $templateString, $options );
 		$this->templates[$id] = $template;
 		
 		return true;
@@ -154,20 +159,19 @@ class TemplateManager {
 	// param1 (string) expects the file path including the filename and extension
 	// param2 (boolean) defines wether the file content shall be cached or not
 	//
-	// return string
+	// return string - the file content
 	//
-	public function getFileTemplate( $file, $cache = true ) {
+	public function getFileTemplate( string $file, bool $cache = true ): string {
 
 		if ( is_string($file) && $this->fileCache[$file] )
 			return $this->fileCache[$file];
 		
 		else if ( !$file || !file_exists($file) )
-			return \Templax\Templax::$log->logReturn( "file {$file} doesnt exist", "" );
+			return \Templax\Templax::$loglife->logReturn( "file {$file} doesnt exist", "" );
 		
 		$fileContent = preg_replace("/\r\n/", "", preg_replace("/\s{2,}/", "", file_get_contents($file)) );
 
-		if ($cache)
-			$this->fileCache[$file] = $fileContent;
+		if ($cache) $this->fileCache[$file] = $fileContent;
 		
 		return $fileContent;
 	}
@@ -178,9 +182,9 @@ class TemplateManager {
 	// param1 (string) expects the template string
 	// param2 (string) expects the marker
 	//
-	// return string
+	// return string - the substring from a file
 	//
-	private function extractTemplate( $file, $marker ) {
+	private function extractTemplate( string $file, string $marker ): string {
 		
 		if ( !$file || !$marker )
 			return "";
@@ -203,8 +207,10 @@ class TemplateManager {
 	// param1 (string) expects the template id
 	//
 	// return boolean
+	//		true - template exists
+	//		false - template does not exist
 	//
-	public function has( $id ) {
+	public function has( string $id ): bool {
 		return (is_string($id)) ? isset($this->templates[$id]) : false;
 	}
 
@@ -213,9 +219,9 @@ class TemplateManager {
 	//
 	// param1 (string) expects the template id
 	//
-	// return \Templax\Models\Template
+	// return reference \Templax\Source\Models\Template - the template instance
 	//
-	public function get( $id, $all = false ) {
+	public function &get( string $id, bool $all = false ) {
 		return ( (!$all) ? $this->templates[$id] : $this->templates );
 	}
 }

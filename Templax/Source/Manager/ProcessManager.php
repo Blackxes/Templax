@@ -4,6 +4,11 @@
 /**********************************************************************************************
 
 	manages template processes
+
+	template processes are information container about the currently processing template
+	
+	subtemplates contain their own template process but when refereing to the template id
+	it referes to the parents template id - its like an anonymous process
 	
 	@Author: Alexander Bassov
 	@Email: blackxes@gmx.de
@@ -12,6 +17,8 @@
 /*********************************************************************************************/
 
 namespace Templax\Source\Manager;
+
+use \Templax\Source\Models;
 
 require_once ( TEMPLAX_ROOT . "/Source/Models/Process.php" );
 
@@ -37,16 +44,14 @@ class ProcessManager {
 	//
 	// return \Templax\Source\Models\Process
 	//
-	public function create(
-		\Templax\Source\Models\Template $template,
-		array $userMarkup = array(),
-		array $options = array() )
+	public function create( Models\Template $template, array $userMarkup = array(),
+		array $options = array() ): Models\Process
 	{
-		$process = new \Templax\Source\Models\Process( ++self::$processIterator, $template, $userMarkup );
-
+		$process = new Models\Process( ++self::$processIterator, $template, $userMarkup );
+		
 		// apply global default, template and passed options
 		$process->setOptions( array_merge(
-			$GLOBALS["Templax"]["CONFIG"]["PARSING"]["optionSets"]["default"]["template"],
+			$GLOBALS["Templax"]["Configuration"]["Parsing"]["optionSets"]["default"]["template"],
 			$template->getOptions(),
 			$options)
 		);
@@ -61,7 +66,8 @@ class ProcessManager {
 	//
 	// return boolean
 	//
-	public function has( $id ) {
+	public function has( int $id ): bool {
+
 		return (bool) $this->processes[ $id ];
 	}
 
@@ -72,7 +78,8 @@ class ProcessManager {
 	//
 	// return \Templax\Source\Models\Process
 	//
-	public function &get( $id ) {
+	public function &get( int $id ): Models\Process {
+
 		return $this->processes[ $id ];
 	}
 
@@ -83,9 +90,9 @@ class ProcessManager {
 	//
 	// return boolean
 	//
-	public function delete( $id ) {
-		if ( !$this->has($id) )
-			return false;
+	public function delete( int $id ): bool {
+
+		if ( !$this->has($id) ) return false;
 
 		unset( $this->processes[$id] );
 

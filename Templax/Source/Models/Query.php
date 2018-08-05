@@ -16,10 +16,14 @@ namespace Templax\Source\Models;
 require_once ( TEMPLAX_ROOT . "/Source/Models/Rule.php" );
 
 //_____________________________________________________________________________________________
-class Query extends \Templax\Source\Models\Rule {
+class Query extends namespace\Rule {
 
 	//_________________________________________________________________________________________
-	public function __construct( $process, \Templax\Source\Models\Rule $rule, $template, $isPostQuery ) {
+	// Todo: header comment of constructor
+	//
+	public function __construct( namespace\Process $process, namespace\Rule $rule,
+		string $template, namespace\Query $postQuery = null )
+	{
 
 		parent::__construct(
 			$rule->getId(), $rule->getRawRule(), $rule->getRequest(),
@@ -28,22 +32,23 @@ class Query extends \Templax\Source\Models\Rule {
 
 		$this->process = $process;
 		$this->template = $template;
-		$this->isPostQuery = $isPostQuery;
+		$this->postQuery = $postQuery;
 		$this->context = "";
 	}
 
 	//_________________________________________________________________________________________
 	// basic setter/getter
 	//
-	public function setProcess( $process ) { $this->process = $process; }
-	public function setTemplate( $template ) { $this->template = $template; }
-	public function setIsPostQuery( $isPostQuery ) { $this->isPostQuery = $isPostQuery; }
-	public function setContext( $context ) { $this->context = $context; }
+	public function setProcess( namespace\Process $process ) { $this->process = $process; }
+	public function setTemplate( string $template ) { $this->template = $template; }
+	public function setPostQuery( namespace\Query $isPostQuery ) { $this->postQuery = $postQuery; }
+	public function setContext( string $context ) { $this->context = $context; }
 	//
-	public function getProcess() { return $this->process; }
-	public function getTemplate() { return $this->template; }
-	public function getIsPostQuery() { return $this->isPostQuery; }
-	public function getContext() { return $this->context; }
+	public function getProcess(): namespace\Process { return $this->process; }
+	public function getTemplate(): string { return $this->template; }
+	public function getPostQuery(): namespace\Query { return $this->postQuery; }
+	public function getIsPostQuery(): bool { return $this->postQuery !== null; }
+	public function getContext(): string { return $this->context; }
 }
 
 //_____________________________________________________________________________________________

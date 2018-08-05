@@ -14,8 +14,24 @@
 // no namespace .. *sad*
 
 //_____________________________________________________________________________________________
+// general things
+$GLOBALS["Templax"]["Configuration"]["General"] = array(
+	"version" => "1.0.0"
+);
+
+//_____________________________________________________________________________________________
+// debugging stuff
+$GLOBALS["Templax"]["Configuration"]["Debugging"]["PrintErrors"] = true;
+
+//_____________________________________________________________________________________________
+// dependencies
+$GLOBALS["Templax"]["Dependencies"] = array(
+	"Logfile" => "\Logfile\Logfile",
+);
+
+//_____________________________________________________________________________________________
 // parsing regex
-$GLOBALS["Templax"]["CONFIG"]["REGEX"] = array(
+$GLOBALS["Templax"]["Configuration"]["Regex"] = array(
 	"extractRule" => "/{{\s*(?:[^<>])*?\s*}}/",
 	"extractRequest" => "/([\w-]+)(?:[\w\s:-]+)?/",
 	"extractKey" => "/{{\s*[\w-]+\s*:\s*([\w-]+)*?\s*}}/",
@@ -23,15 +39,15 @@ $GLOBALS["Templax"]["CONFIG"]["REGEX"] = array(
 
 // for better look at this regex
 //
-// param1 (\Templax\Models\Query) expects the query
-// param2 (string) expects the 
+// param1 (\Templax\Source\Models\Query) expects the query
 //
-$GLOBALS["Templax"]["CONFIG"]["REGEX"]["extractArea"] = function( \Templax\Source\Models\Query $query ) {
+$GLOBALS["Templax"]["Configuration"]["Regex"]["extractArea"] = function( \Templax\Source\Models\Query $query ) {
 	return "/{$query->getRawRule()}(.*?){{\s*{$query->getRequest()}\s+end\s*:\s*{$query->getKey()}\s*}}/";
 };
 
 //_____________________________________________________________________________________________
-$GLOBALS["Templax"]["CONFIG"]["PARSING"] = array(
+// actual parsing configurations like templates and defaults
+$GLOBALS["Templax"]["Configuration"]["Parsing"] = array(
 	"optionSets" => array(
 		"default" => array(
 			"rule" => array(
@@ -43,9 +59,6 @@ $GLOBALS["Templax"]["CONFIG"]["PARSING"] = array(
 		),
 		"templateInline" => array(
 			"renderInline" => false
-		),
-		"case" => array(
-			"render" => true
 		)
 	)
 );

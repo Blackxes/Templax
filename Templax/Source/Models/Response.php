@@ -22,7 +22,8 @@ class Response {
 	private $indexOffset; // regex offset of the main template content regex
 
 	//_________________________________________________________________________________________
-	public function __construct( $replacement = "", $value = "", \Templax\Source\Models\Query $postQuery = null, $offset = null )
+	public function __construct( ?string $replacement = "", $value = "",
+		namespace\Query $postQuery = null, $offset = null )
 	{
 		$this->replacement = $replacement;
 		$this->value = $value;
@@ -30,28 +31,27 @@ class Response {
 		$this->offset = $offset;
 		$this->context = "";
 
-		if ( $this->postQuery )
-			$this->postQuery->setIsPostQuery(true);
+		if ( $this->postQuery ) $this->postQuery->setIsPostQuery(true);
 	}
 
 	//_________________________________________________________________________________________
 	// basic setter/getter
 	//
-	public function setReplacement( $replacement ) { $this->replacement = $replacement; }
+	public function setReplacement( string $replacement ) { $this->replacement = $replacement; }
 	public function setValue( $value ) { $this->value = $value; }
-	public function setPostQuery( \Templax\Query $postQuery ) { $this->postQuery = $postQuery; }
+	public function setPostQuery( namespace\Query $postQuery ) { $this->postQuery = $postQuery; }
 	public function setOffset( $offset ) { $this->offset = $offset; }
-	public function setContext( $context ) { $this->context = $context; }
+	public function setContext( string $context ) { $this->context = $context; }
 	//
-	public function getReplacement() { return $this->replacement; }
+	public function getReplacement(): string { return (string) $this->replacement; }
 	public function getValue() { return $this->value; }
-	public function getPostQuery() { return $this->postQuery; }
+	public function getPostQuery(): ?namespace\Query { return $this->postQuery; }
 	public function getOffset() { return $this->offset; }
-	public function getContext() { return $this->context; }
+	public function getContext(): string { return $this->context; }
 	//
-	public function hasOffset() { return $this->offset !== null; }
+	public function hasOffset(): bool { return $this->offset !== null; }
 	//
-	public function isPostQuery() { return (bool) $this->postQuery; }
+	public function isPostQuery(): bool { return (bool) $this->postQuery; }
 }
 
 //_____________________________________________________________________________________________

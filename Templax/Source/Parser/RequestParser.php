@@ -14,6 +14,8 @@
 
 namespace Templax\Source\Parser;
 
+use \Templax\Source\Models;
+
 require_once ( TEMPLAX_ROOT . "/Templax.php" );
 require_once ( TEMPLAX_ROOT . "/Source/Models/Response.php" );
 
@@ -33,7 +35,7 @@ class RequestParser {
 	//
 	// return \Templax\Source\Models\Response
 	//
-	static public function parse( \Templax\Source\Models\Query $query ) {
+	static public function parse( Models\Query $query ): Models\Response {
 
 		// commands need to check theirselves wether the request will be rendered or not
 		if ( method_exists(get_called_class(), $query->getRequest()) ) {
@@ -43,13 +45,13 @@ class RequestParser {
 
 		// when no command given
 		if ( !$query->getOption("render") )
-			return new \Templax\Source\Models\Response();
+			return new Models\Response();
 		
 		if ( !$query->getKey() )
-			return new \Templax\Source\Models\Response( null, $query->getValue() );
+			return new Models\Response( null, $query->getValue() );
 		
 		// default
-		return new \Templax\Source\Models\Response();
+		return new Models\Response();
 	}
 
 	//_________________________________________________________________________________________
@@ -60,19 +62,19 @@ class RequestParser {
 	//
 	// return \Templax\Source\Models\Response
 	//
-	static public function foreach( \Templax\Source\Models\Query $query ) {
+	static public function foreach( Models\Query $query ): Models\Response {
 
 		if ( !$query->getKey() )
-			return new \Templax\Source\Models\Response();
+			return new Models\Response();
 
-		preg_match($GLOBALS["Templax"]["CONFIG"]["REGEX"]["extractArea"]( $query ),
+		preg_match($GLOBALS["Templax"]["Configuration"]["Regex"]["extractArea"]( $query ),
 			$query->getTemplate(), $templateMatch);
 		
 		$content = "";
 
 		// when no array no parsing will happen
 		if ( !$query->getOption("render") || !is_array($query->getValue()) )
-			return new \Templax\Source\Models\Response( $templateMatch[0], "" );
+			return new Models\Response( $templateMatch[0], "" );
 
 		foreach( $query->getValue() as $index => $markup ) {
 
@@ -81,7 +83,7 @@ class RequestParser {
 			);
 		}
 		
-		return new \Templax\Source\Models\Response( $templateMatch[0], $content );
+		return new Models\Response( $templateMatch[0], $content );
 	}
 
 	//_________________________________________________________________________________________
@@ -91,26 +93,26 @@ class RequestParser {
 	//
 	// return \Templax\Source\Models\Response
 	//
-	static public function template( \Templax\Source\Models\Query $query ) {
+	static public function template( Models\Query $query ): Models\Response {
 
 		if ( !$query->getOption("render") || !$query->getKey() )
 			return \Templax\Source\Models\Response();
 		
-		$response = new \Templax\Source\Models\Response( $query->getRawRule(), "" );
+		$response = new Models\Response( $query->getRawRule(), "" );
 		
 		// when the template doesnt exists return and define as post query
 		// but not when its already a post query
 		if ( !\Templax\Templax::hasTemplate($query->getKey()) ) {
 			if ( !$query->getIsPostQuery() )
-				return new \Templax\Source\Models\Response( $query->getRawRule(), $query->getRawRule(), $query );
-			return new \Templax\Source\Models\Response( $query->getRawRule(), "" );
+				return new Models\Response( $query->getRawRule(), $query->getRawRule(), $query );
+			return new Models\Response( $query->getRawRule(), "" );
 		}
 
 		$value = $query->getValue();
 
 		$content = \Templax\Templax::parse( $query->getKey(), ($value && is_array($value)) ? $value : array() );
 		
-		return new \Templax\Source\Models\Response( $query->getRawRule(), $content );
+		return new Models\Response( $query->getRawRule(), $content );
 	}
 
 	//_________________________________________________________________________________________
@@ -120,15 +122,15 @@ class RequestParser {
 	//
 	// return \Templax\Source\Models\Response
 	//
-	static public function templateInline( \Templax\Source\Models\Query $query ) {
+	static public function templateInline( Models\Query $query ): Models\Response {
 
 		if ( !$query->getOption("render") || !$query->getKey() )
-			return new \Templax\Source\Models\Response();
+			return new Models\Response();
 		
-		$response = new \Templax\Source\Models\Response();
+		$response = new Models\Response();
 
 		// extact inline template
-		preg_match($GLOBALS["Templax"]["CONFIG"]["REGEX"]["extractArea"]( $query ),
+		preg_match($GLOBALS["Templax"]["Configuration"]["Regex"]["extractArea"]( $query ),
 			$query->getTemplate(), $templateMatch);
 		
 		// register new template with the given markup and options
@@ -142,7 +144,7 @@ class RequestParser {
 		$response->setReplacement( $templateMatch[0] );
 
 		$result = \Templax\Templax::getTemplateManager()->registerTemplateInstance(
-			new \Templax\Source\Models\Template( $key, $templateMatch[1], $markup, $options )
+			new Models\Template( $key, $templateMatch[1], $markup, $options )
 		);
 		
 		return $response;
@@ -156,16 +158,16 @@ class RequestParser {
 	//
 	// return \Templax\Source\Models\Response
 	//
-	static public function templateSelect( \Templax\Source\Models\Query $query ) {
+	static public function templateSelect( Models\Query $query ): Models\Response {
 
 		if ( !$query->getKey() )
-			return new \Templax\Source\Models\Response();
+			return new Models\Response();
 		
-		preg_match($GLOBALS["Templax"]["CONFIG"]["REGEX"]["extractArea"]( $query ),
+		preg_match($GLOBALS["Templax"]["Configuration"]["Regex"]["extractArea"]( $query ),
 			$query->getTemplate(), $templateMatch);
 		
 		if ( !\Templax\Templax::hasTemplate($query->getValue()) )
-			return new \Templax\Source\Models\Response( ($templateMatch) ? $templateMatch[0] : $query->getRawRule(), "" );
+			return new Models\Response( ($templateMatch) ? $templateMatch[0] : $query->getRawRule(), "" );
 		
 		$markup = $query->getCommandValue();
 		$content = \Templax\Templax::parse(
@@ -173,7 +175,7 @@ class RequestParser {
 			is_array($markup) ? $markup : array()
 		);
 
-		return new \Templax\Source\Models\Response( $templateMatch[0], $content );
+		return new Models\Response( $templateMatch[0], $content );
 	}
 
 	//_________________________________________________________________________________________
@@ -183,16 +185,16 @@ class RequestParser {
 	//
 	// return \Templax\Source\Models\Response
 	//
-	static public function case( \Templax\Source\Models\Query $query ) {
+	static public function case( Models\Query $query ): Models\Response {
 
 		if ( !$query->getKey() )
 			return new \Templax\Source\Models\Response();
 		
-		preg_match($GLOBALS["Templax"]["CONFIG"]["REGEX"]["extractArea"]( $query ),
+		preg_match($GLOBALS["Templax"]["Configuration"]["Regex"]["extractArea"]( $query ),
 			$query->getTemplate(), $templateMatch);
 
 		if ( !$query->getValue() )
-			return new \Templax\Source\Models\Response( ($templateMatch) ? $templateMatch[0] : $query->getRawRule(), "" );
+			return new Models\Response( ($templateMatch) ? $templateMatch[0] : $query->getRawRule(), "" );
 		
 		$markup = $query->getValue();
 
@@ -201,7 +203,7 @@ class RequestParser {
 			$templateMatch[1], ( is_array($markup) ) ? $markup : array( $query->getKey() => $markup)
 		);
 
-		return new \Templax\Source\Models\Response( $templateMatch[0], $content );
+		return new Models\Response( $templateMatch[0], $content );
 	}
 
 	//_________________________________________________________________________________________
@@ -211,16 +213,16 @@ class RequestParser {
 	//
 	// return \Templax\Source\Models\Response
 	//
-	static public function if ( \Templax\Source\Models\Query $query ) {
+	static public function if ( Models\Query $query ): Models\Response {
 
 		if ( !$query->getKey() )
-			return new \Templax\Source\Models\Response();
+			return new Models\Response();
 		
-		preg_match($GLOBALS["Templax"]["CONFIG"]["REGEX"]["extractArea"]( $query ),
-		$query->getTemplate(), $templateMatch);
+		preg_match($GLOBALS["Templax"]["Configuration"]["Regex"]["extractArea"]( $query ),
+			$query->getTemplate(), $templateMatch);
 
 		if ( !$query->getProcess()->getQueryMarkup()[ $query->getKey() ] )
-			return new \Templax\Source\Models\Response( ($templateMatch) ? $templateMatch[0] : $query->getRawRule(), "" );
+			return new Models\Response( ($templateMatch) ? $templateMatch[0] : $query->getRawRule(), "" );
 		
 		$markup = $query->getCommandValue();
 		$content = \Templax\Templax::parse(
@@ -228,7 +230,7 @@ class RequestParser {
 			is_array($markup) ? $markup : array()
 		);
 
-		return new \Templax\Source\Models\Response( $templateMatch[0], $content );
+		return new Models\Response( $templateMatch[0], $content );
 		
 	}
 }

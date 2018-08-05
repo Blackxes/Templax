@@ -13,6 +13,8 @@
 
 namespace Templax\Source\Parser;
 
+use \Templax\Source\Models;
+
 require_once ( TEMPLAX_ROOT ."/Source/Models/Rule.php" );
 
 //_____________________________________________________________________________________________
@@ -32,14 +34,14 @@ class RuleParser {
 	//
 	// return \Templax\Models\Rule
 	//
-	static public function parse( \Templax\Source\Models\Process &$process, $rawRule ) {
+	static public function parse( Models\Process &$process, string $rawRule ): Models\Rule {
 
-		$config = $GLOBALS["Templax"]["CONFIG"];
+		$config = $GLOBALS["Templax"]["Configuration"];
 		
-		preg_match( $config["REGEX"]["extractRequest"], $rawRule, $requestMatch );
-		preg_match( $config["REGEX"]["extractKey"], $rawRule, $keyMatch );
+		preg_match( $config["Regex"]["extractRequest"], $rawRule, $requestMatch );
+		preg_match( $config["Regex"]["extractKey"], $rawRule, $keyMatch );
 		
-		$rule = new \Templax\Source\Models\Rule( ++self::$ruleIterator, $rawRule, $requestMatch[1], $keyMatch[1] );
+		$rule = new Models\Rule( ++self::$ruleIterator, $rawRule, $requestMatch[1], $keyMatch[1] );
 
 		// check if there are inline options
 		$queryMarkup = $process->getQueryMarkup();
@@ -59,10 +61,10 @@ class RuleParser {
 				$requestValue = $markupValue["value"];
 		}
 
-		$commandOptions = $config["PARSING"]["optionSets"][ $requestMatch[1] ];
+		$commandOptions = $config["Parsing"]["optionSets"][ $requestMatch[1] ];
 
 		$options = array_merge(
-			$config["PARSING"]["optionSets"]["default"]["rule"],
+			$config["Parsing"]["optionSets"]["default"]["rule"],
 			($commandOptions) ? $commandOptions : array(),
 			$customOptions
 		);
@@ -88,11 +90,9 @@ class RuleParser {
 	//
 	static private function resolveValues( $values ) {
 
-		if ( !$values )
-			return $values;
+		if ( !$values ) return $values;
 		
-		if ( !is_array($values) )
-			$values = array( "__value" => $values );
+		if ( !is_array($values) ) $values = array( "__value" => $values );
 
 		foreach( $values as $option => $value )
 			if ( is_callable($value) )
@@ -104,9 +104,10 @@ class RuleParser {
 	//_________________________________________________________________________________________
 	// returns the current rule iteration count
 	//
-	// return int
+	// return int - the current iteration of the rules (the count)
 	//
-	static public function getRuleCount() {
+	static public function getRuleCount(): int {
+
 		return self::$ruleIterator;
 	}
 }
