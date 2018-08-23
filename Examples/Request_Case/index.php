@@ -25,9 +25,7 @@ require_once ( "../../Templax/Templax.php" );
 
 	$markup = array(
 		"page-title" => "Request Case",
-		"image" => array(
-			"source" => "http://via.placeholder.com/120x120",
-		),
+		"image" => "http://via.placeholder.com/120x120",
 		"firstname" => "Alexander",
 		"lastname" => false
 	);

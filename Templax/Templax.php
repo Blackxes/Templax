@@ -13,14 +13,13 @@
 
 namespace Templax;
 
+error_reporting(E_ALL & ~E_NOTICE);
+
 use \Templax\Source\Models;
 use \Templax\Source\Manager;
 use \Templax\Source\Parser;
 
 define( "TEMPLAX_ROOT", __DIR__, true );
-
-// enable error reporting only when "DEBUG" file exists
-error_reporting ( (file_exists(TEMPLAX_ROOT . "/DEBUG")) ? E_ALL & ~E_NOTICE : 0 );
 
 require_once ( TEMPLAX_ROOT . "/Configuration.php" );
 require_once ( TEMPLAX_ROOT . "/Source/Manager/ProcessManager.php" );
