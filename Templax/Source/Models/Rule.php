@@ -2,13 +2,11 @@
 
 //_____________________________________________________________________________________________
 /**********************************************************************************************
-
-	rule model
-	
-	@Author: Alexander Bassov
-	@Email: blackxes@gmx.de
-	@Github: https://www.github.com/Blackxes
-
+ * 
+ * rule model
+ * 
+ * @author: Alexander Bassov
+ * 
 /*********************************************************************************************/
 
 namespace Templax\Source\Models;
@@ -16,50 +14,89 @@ namespace Templax\Source\Models;
 //_____________________________________________________________________________________________
 class Rule {
 
-	private $id;
-	private $rawRule;
-	private $request;
-	private $key;
-	private $value;
-	private $commandValue;
-	private $options;
+	/**
+	 * rule id
+	 * 
+	 * @var int
+	 */
+	public $id;
 
-	//_________________________________________________________________________________________
-	// Todo: header comment of constructor
-	//
-	public function __construct( int $id, string $rawRule, string $request,
-		$key = "", $value = "", $commandValue = "", array $options = array() )
-	{
+	/**
+	 * the rule thats been extracted from the template
+	 * 
+	 * @var string
+	 */
+	public $rawRule;
+
+	/**
+	 * contains the request from this rule
+	 * null when no request is found
+	 * 
+	 * @var string|null
+	 */
+	public $request;
+
+	/**
+	 * contains the key - always in combination with the request
+	 * 
+	 * @var string|null
+	 */
+	public $key;
+
+	/**
+	 * contains the value from the markup associated to the request
+	 * 
+	 * @var mixed
+	 */
+	public $value;
+
+	/**
+	 * when the request is a command this value contains the value/markup for the request
+	 * 
+	 * @var mixed
+	 */
+	public $commandValue;
+
+	/**
+	 * contains the options for this rule
+	 * 
+	 * @var array|null
+	 */
+	public $options;
+
+	/**
+	 * the prio key defines wether the request or the key value should be taken
+	 * to extract the value from the markup
+	 */
+	public $prioKey;
+
+	/**
+	 * construction
+	 * 
+	 * @param int $id - the rule id
+	 * @param string $rawRule - the raw extracted rule
+	 * @param string|null $request - the request from the rule
+	 * @param string|null $key - the key - always in combination with a command
+	 */
+	public function __construct( int $id, string $rawRule, ?string $request, ?string $key ) {
+
 		$this->id = $id;
 		$this->rawRule = $rawRule;
 		$this->request = $request;
 		$this->key = $key;
-		$this->value = $value;
-		$this->commandValue = $commandValue;
-		$this->options = $options;
+		
+		$this->options = array();
 	}
 
-	//_________________________________________________________________________________________
-	// basic setter/getter
-	//
-	public function setId( int $id ) { $this->id = $id; }
-	public function setRawRule( string $rawRule ) { $this->rawRule = $rawRule; }
-	public function setRequest( string $request ) { $this->request = $request; }
-	public function setKey( string $key ) { $this->key = $key; }
-	public function setValue( $value ) { $this->value = $value; }
-	public function setCommandValue( $value ) { $this->commandValue = $value; }
-	public function setOptions( array $options ) { $this->options = $options; }
-	public function setOption( string $key, $value ) { $this->options[$key] = $value; }
-	//
-	public function getId(): int { return $this->id; }
-	public function getRawRule(): string { return $this->rawRule; }
-	public function getRequest(): string { return $this->request; }
-	public function getKey() { return $this->key; }
-	public function getValue() { return $this->value; }
-	public function getCommandValue() { return $this->commandValue; }
-	public function getOptions(): array { return $this->options; }
-	public function getOption( $option ) { return $this->options[$option]; }
-	//
+	/**
+	 * returns an option
+	 * 
+	 * @return mixed
+	 */
+	public function getOption( $option ) {
+
+		return $this->options[$option];
+	}
 }
 
 //_____________________________________________________________________________________________

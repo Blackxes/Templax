@@ -11,6 +11,9 @@
 	<ul>
 		{{ foreach: fruits }}
 			<li>{{ label }}</li>
+			{{ foreach: variants }}
+			<p>{{ value }}</p>
+			{{ foreach end: variants }}
 		{{ foreach end: fruits }}
 	</ul>
 	<a href="../../index.php">Table of Contents</a>

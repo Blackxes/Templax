@@ -16,24 +16,28 @@ require_once ( "./Dependencies/Logfile/Logfile.php" );
 
 //_____________________________________________________________________________________________
 	// load template
-	\Templax\Templax::define( array("base" => __DIR__ . "\\index.html") );
+	\Templax\Templax::Init( array(
+		"base" => array( "file" => __DIR__ . "\\index.html", "marker" => "base" ),
+		"examples" => array( "file" => __DIR__ . "\\index.html", "marker" => "examples" )
+	));
 
 	// scan examples and build markup
 	$markup = array(
-		"title" => "Templax - Table of Contents"
+		"content" => "examples"
 	);
 	$examples = preg_grep("/^\./", scandir("./Examples"), PREG_GREP_INVERT );
 
 	foreach( $examples as $index => $dir ) {
 		if ( file_exists("index.php") ) {
-			$markup["examples"][$dir] = array(
+			$markup["templateSelect-content"]["examples"][$dir] = array(
 				"title" => str_replace("_", " ", $dir ),
 				"path" => "./Examples/" . $dir . "/index.php"
 			);
 		}
 	}
-
+	
 	$content = \Templax\Templax::parse("base", $markup);
+	
 	echo $content;
 
 //_____________________________________________________________________________________________

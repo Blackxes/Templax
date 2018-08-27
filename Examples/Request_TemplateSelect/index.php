@@ -17,11 +17,11 @@ require_once ( "../../Templax/Templax.php" );
 //_____________________________________________________________________________________________
 
 	// load template
-	\Templax\Templax::define(
+	\Templax\Templax::Init(
 		array(
-			"base" => array( "path" => __DIR__ . "/index.html", "marker" => "base" ),
-			"logged_in" => array( "path" => __DIR__ . "/index.html", "marker" => "logged_in" ),
-			"logged_out" => array( "path" => __DIR__ . "/index.html", "marker" => "logged_out" )
+			"base" => array( "file" => __DIR__ . "/index.html", "marker" => "base" ),
+			"logged_in" => array( "file" => __DIR__ . "/index.html", "marker" => "logged_in" ),
+			"logged_out" => array( "file" => __DIR__ . "/index.html", "marker" => "logged_out" )
 		)
 	);
 
@@ -32,7 +32,7 @@ require_once ( "../../Templax/Templax.php" );
 	// when the template is not found an empty string is used
 	//
 	$markup = array(
-		"login-status" => "logged_in",
+		"login-status" => "logged_out",
 		"templateSelect-login-status" => array(
 			"user" => "Blackxes"
 		)

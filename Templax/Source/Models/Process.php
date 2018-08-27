@@ -2,13 +2,11 @@
 
 //_____________________________________________________________________________________________
 /**********************************************************************************************
-
-	process class
-	
-	@Author: Alexander Bassov
-	@Email: blackxes@gmx.de
-	@Github: https://www.github.com/Blackxes
-
+ * 
+ * process model
+ * 
+ * @author Alexander Bassov
+ * 
 /*********************************************************************************************/
 
 namespace Templax\Source\Models;
@@ -16,57 +14,116 @@ namespace Templax\Source\Models;
 //_____________________________________________________________________________________________
 class Process {
 
-	private $id;
-	private $template;
-	private $userMarkup;
-	private $baseMarkup;
-	private $options;
-	private $currentQuery;
-	private $isSubProcess;
+	/**
+	 * the process id
+	 * 
+	 * @var int
+	 */
+	public $id;
 
-	//_________________________________________________________________________________________
-	//
-	// param1 (int) expects the process id
-	// param2 (\Templax\Source\Models\Templax) expects the template
-	// param3 (array) expects the user markup
-	// param4 (array) expects the options for the template
-	// 		these options are aggressive ones - you have defaults ones you define
-	//		when registering a template and these options are the ones you pass when invoking
-	//		the parse function of the templax instance
-	// param5 (bool) describes wether this process is a subprocess of another one
-	//
-	public function __construct( int $id, namespace\Template $template, array $userMarkup = array(),
-		array $options = array(), bool $isSubProcess = false )
+	/**
+	 * current template
+	 * 
+	 * @var \Templax\Source\Models\Template
+	 */
+	public $template;
+
+	/**
+	 * the user defined markup for this template
+	 * 
+	 * @var array|null
+	 */
+	public $userMarkup;
+
+	/**
+	 * the markup that will be used in the query
+	 * this one is merged with some extra marker and the user markup
+	 * 
+	 * @var array
+	 */
+	public $queryMarkup = array();
+
+	/**
+	 * process options
+	 * 
+	 * @var array
+	 */
+	public $options = array();
+
+	/**
+	 * current query
+	 * 
+	 * @var \Templax\Source\Models\Query
+	 */
+	public $query;
+
+	/**
+	 * describes wether this process is a main process
+	 * main processes are the ones who contains the initial template
+	 * the one the user requested / not the subprocesses that follows afterwards
+	 */
+	public $isMainProcess = false;
+
+	/**
+	 * contains values for keys within the markup
+	 * when the template processing reaches a rule signature
+	 * that matches one of these hooks
+	 * the value of this hook will be used for the further processing of "this" rule
+	 * 
+	 * but only on the level below the rule including the rule itself
+	 * 
+	 * @var array
+	 */
+	public $hooks;
+
+	/**
+	 * the parent process of this one
+	 * 
+	 * @var \Templax\Source\Models\Process|null
+	 */
+	public $parent;
+	
+	/**
+	 * construction
+	 * 
+	 * Todo: complete function header
+	 */
+	public function __construct( int $id, namespace\ParsingSet $set, int $parent = null )
 	{
-
 		$this->id = $id;
-		$this->template = $template;
-		$this->userMarkup = $userMarkup;
+		$this->template = $set->source;
+		$this->userMarkup = $set->markup;
 		$this->queryMarkup = array();
-		$this->options = $options;
-		$this->currentQuery = null;
-		$this->isSubProcess = $isSubProcess;
+		$this->options = $set->options;
+		$this->hooks = $set->hooks;
+
+		$this->parent = null;
 	}
 
-	//_________________________________________________________________________________________
-	// basic setter/getter
-	public function setId( int $id ) { $this->id = $id; }
-	public function setTemplate( namespace\Template $template ) { $this->template = $template; }
-	public function setUserMarkup( array $userMarkup ) { $this->userMarkup = $userMarkup; }
-	public function setQueryMarkup( array $queryMarkup ) { $this->queryMarkup = $queryMarkup; }
-	public function setOptions( array $options ) { $this->options = $options; }
-	public function setCurrentQuery( namespace\Query $query = null ) { $this->currentQuery = $query; }
-	public function setIsSubProcess( bool $isSubProcess ) { $this->isSubProcess = $isSubProcess; }
-	public function setParentProcess( namespace\Process $process ) { $this->parentProcess = $process; }
-	//
-	public function getId(): int { return $this->id; }
-	public function getTemplate(): namespace\Template { return $this->template; }
-	public function getUserMarkup(): array { return $this->userMarkup; }
-	public function getQueryMarkup(): array { return $this->queryMarkup; }
-	public function getOptions(): array { return $this->options; }
-	public function getOption( $option ) { return $this->options[$option]; }
-	public function getCurrentQuery(): namespace\Query { return $this->currentQuery; }
-	public function getIsSubProcess(): bool { return $this->isSubProcess; }
+	/**
+	 * returns the value of a hook when defined else null
+	 * 
+	 * @param string $ruleSignature - the rule signature
+	 * 
+	 * @return mixed|null
+	 */
+	public function getHook( string $ruleSignature ) {
+
+		if ( isset($this->hooks[$ruleSignature]) )
+			return $this->hooks[$ruleSignature];
+		
+		return null;
+	}
+
+	/**
+	 * returns the value of a option
+	 * 
+	 * @return mixed
+	 */
+	public function getOption( $option ) {
+
+		return $this->options[ $option ];
+	}
 }
 
 //_____________________________________________________________________________________________

@@ -17,7 +17,7 @@ require_once ( "../../Templax/Templax.php" );
 //_____________________________________________________________________________________________
 
 	// load template
-	\Templax\Templax::define(
+	\Templax\Templax::Init(
 		array(
 			"base" => __DIR__ . "/index.html"
 		)

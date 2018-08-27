@@ -2,55 +2,75 @@
 
 //_____________________________________________________________________________________________
 /**********************************************************************************************
-
-	query model
-	
-	@Author: Alexander Bassov
-	@Email: blackxes@gmx.de
-	@Github: https://www.github.com/Blackxes
-
+ * 
+ * query model
+ * 
+ * @author: Alexander Bassov
+ * 
 /*********************************************************************************************/
 
 namespace Templax\Source\Models;
 
-require_once ( TEMPLAX_ROOT . "/Source/Models/Rule.php" );
+require_once( TEMPLAX_ROOT . "/Source/Models/Rule.php" );
 
 //_____________________________________________________________________________________________
 class Query extends namespace\Rule {
 
-	//_________________________________________________________________________________________
-	// Todo: header comment of constructor
-	//
-	public function __construct( namespace\Process $process, namespace\Rule $rule,
-		string $template, namespace\Query $postQuery = null )
-	{
+	/**
+	 * current process
+	 * 
+	 * @var \Templax\Source\Models\Process
+	 */
+	public $process;
 
-		parent::__construct(
-			$rule->getId(), $rule->getRawRule(), $rule->getRequest(),
-			$rule->getKey(), $rule->getValue(), $rule->getCommandValue(), $rule->getOptions()
-		);
+	/**
+	 * the context from the template for the current rule
+	 * 
+	 * @var string
+	 */
+	public $template;
+
+	/**
+	 * post querry
+	 * 
+	 * @var \Templax\Source\Models\Query
+	 */
+	public $postQuery;
+
+	/**
+	 * the template context of the current query
+	 * 
+	 * @var null|string
+	 */
+	public $context;
+
+	/**
+	 * construction
+	 * 
+	 * @param \Templax\Source\Models\Process $process - current process
+	 * @param \Templax\Source\Models\Rule $rule - the rule
+	 * @param string $template - the context from the template for the current rule
+	 * @param \Templax\Source\Models\Query $postQuery - post query
+	 */
+	public function __construct( namespace\Process $process, namespace\Rule $rule,
+		string $template, ?namespace\Query $postQuery
+	)
+	{
+		$this->id = $rule->id;
+		$this->rawRule = $rule->rawRule;
+		$this->request = $rule->request;
+		$this->key = $rule->key;
+		$this->value = $rule->value;
+		$this->commandValue = $rule->commandValue;
+		$this->options = $rule->options;
+		$this->prioKey = $rule->prioKey;
 
 		$this->process = $process;
 		$this->template = $template;
 		$this->postQuery = $postQuery;
 		$this->context = "";
 	}
-
-	//_________________________________________________________________________________________
-	// basic setter/getter
-	//
-	public function setProcess( namespace\Process $process ) { $this->process = $process; }
-	public function setTemplate( string $template ) { $this->template = $template; }
-	public function setPostQuery( namespace\Query $isPostQuery ) { $this->postQuery = $postQuery; }
-	public function setContext( string $context ) { $this->context = $context; }
-	//
-	public function getProcess(): namespace\Process { return $this->process; }
-	public function getTemplate(): string { return $this->template; }
-	public function getPostQuery(): namespace\Query { return $this->postQuery; }
-	public function getIsPostQuery(): bool { return $this->postQuery !== null; }
-	public function getContext(): string { return $this->context; }
 }
 
 //_____________________________________________________________________________________________
 //
-

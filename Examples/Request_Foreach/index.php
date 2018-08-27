@@ -17,7 +17,7 @@ require_once ( "../../Templax/Templax.php" );
 //_____________________________________________________________________________________________
 
 	// load template
-	\Templax\Templax::define(
+	\Templax\Templax::Init(
 		array(
 			"base" => __DIR__ . "/index.html"
 		)
@@ -26,13 +26,23 @@ require_once ( "../../Templax/Templax.php" );
 	$markup = array(
 		"page-title" => "Foreach request",
 		"fruits" => array(
-			"fruit1" => array( "label" => "banana" ),
-			"0" => array( "label" => "apple" ),
-			"_wusa" => array( "label" => "citrus" )
+			array(
+				"label" => "banana",
+				"variants" => array(
+					array( "value" => "tasty" ),
+					array( "value" => "horrible" )
+				)
+			),
+			array( "label" => "apple" ),
+			array( "label" => "citrus" )
 		)
 	);
 
-	$content = \Templax\Templax::parse("base", $markup);
+	$hooks = array(
+		"base_page-title" => "Neuer Titel"
+	);
+
+	$content = \Templax\Templax::parse( "base", $markup, $hooks );
 	echo $content;
 
 //_____________________________________________________________________________________________

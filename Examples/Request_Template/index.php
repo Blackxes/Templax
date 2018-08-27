@@ -17,7 +17,7 @@ require_once ( "../../Templax/Templax.php" );
 //_____________________________________________________________________________________________
 
 	// load template
-	\Templax\Templax::define(
+	\Templax\Templax::Init(
 		array(
 			"base" => __DIR__ . "/index.html",
 			"placeholder"  => __DIR__ . "/placeholder.html",
@@ -26,7 +26,7 @@ require_once ( "../../Templax/Templax.php" );
 
 	$markup = array(
 		"placeholder" => array(
-			"some-marker-in-another-template" => "Text defined for the placeholder template"
+			"marker" => "Text defined for the placeholder template"
 		)
 	);
 
