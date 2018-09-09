@@ -34,23 +34,13 @@ class ProcessManager {
 	 * @var int
 	 */
 	static private $pIterator = 0;
-
-	/**
-	 * default options
-	 * 
-	 * @var array
-	 */
-	private $baseOptions;
-
-
+	
 	/**
 	 * construction
 	 */
 	public function __construct() {
 		
 		$this->processes = array();
-
-		$this->baseOptions = $GLOBALS["Templax"]["Defaults"]["Process"]["BaseOptions"];
 	}
 
 	/**
@@ -61,28 +51,40 @@ class ProcessManager {
 	 * 
 	 * @return \Templax\Source\Models\Process
 	 */
-	public function create( Models\ParsingSet $set ) {
-
-		// no creation when the set is invalid
-		if ( !$set->valid )
-			return false;
+	public function &create( \Templax\Source\Models\ParsingSet $set ) {
 		
 		// manual adjustments
-		$set->options = array_merge( $this->baseOptions, $set->options );
-		
 		$process = new Models\Process( self::$pIterator, $set );
 
-		// when no processes are registered so far than this one is the main
-		$process->isMainProcess = empty( $this->processes );
-
-		// define the parent when its not a main process
-		if ( !$process->isMainProcess )
-			$process->parent = $set->parentProcess;
+		// every process except the main process has a parent
+		if ( !$process->isMainProcess() )
+			$process->setParent( $set->getParent() );
 		
-		// final registration
-		$this->processes[ ++self::$pIterator ] = $process;
+		// register
+		$this->processes[ self::$pIterator ] = $process;
 
+		// increase the process counter
+		self::$pIterator++;
+
+		// returns the last inserted process / therefore the current created one
 		return $this->getLast();
+	}
+
+	/**
+	 * deletes a process and returns its success state
+	 * 
+	 * @param \Templax\Source\Models\Process|int $id - the process id or the process itself
+	 * 
+	 * @return boolean - true when delete otherwise false
+	 */
+	public function delete( $_id ) {
+		
+		// get id 
+		$id = is_a($_id, "\Templax\Source\Models\Process") ? $_id->getId() : $_id;
+		
+		unset( $this->processes[$id] );
+		
+		return !$this->has($id);
 	}
 
 	/**
@@ -118,6 +120,16 @@ class ProcessManager {
 	}
 
 	/**
+	 * returns the current count of processes
+	 * 
+	 * @return int
+	 */
+	public function getProcessCount() {
+
+		return count( $this->processes );
+	}
+
+	/**
 	 * returns the existance of a process as boolean
 	 * 
 	 * @param int $id - the process id
@@ -126,21 +138,23 @@ class ProcessManager {
 	 */
 	public function has( int $id ) {
 
-		return isset( $this->processes[$id] ) && !is_null($this->processes[$id]);
+		$a = isset( $this->processes[$id] );
+		$b = !is_null($this->processes[$id]);
+
+		return $a && $b;
+
+		// return  ;
 	}
 
 	/**
-	 * deletes a process and returns its success state
+	 * returns the existance of the main process
 	 * 
-	 * @param int $id - the process id
-	 * 
-	 * @return boolean
+	 * @return boolean - true when the process exists otherwise false
 	 */
-	public function delete( int $id ) {
-		
-		unset( $this->processes[$id] );
-		
-		return !$this->has($id);
+	public function mainProcessExists() {
+
+		// the main process has always the id 0
+		return isset( $this->processes[0] );
 	}
 }
 

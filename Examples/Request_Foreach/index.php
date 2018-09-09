@@ -11,7 +11,7 @@
 
 /*********************************************************************************************/
 
-require_once ( "../../Dependencies/Logfile/Logfile.php" );
+// require_once ( "../../Dependencies/Logfile/Logfile.php" );
 require_once ( "../../Templax/Templax.php" );
 
 //_____________________________________________________________________________________________
@@ -26,20 +26,16 @@ require_once ( "../../Templax/Templax.php" );
 	$markup = array(
 		"page-title" => "Foreach request",
 		"fruits" => array(
-			array(
-				"label" => "banana",
-				"variants" => array(
-					array( "value" => "tasty" ),
-					array( "value" => "horrible" )
-				)
-			),
-			array( "label" => "apple" ),
-			array( "label" => "citrus" )
+			"banana" => array( "label" => "banana" ),
+			"apple" => array( "label" => "apple" ),
+			"citrus" => array( "label" => "citrus" )
 		)
 	);
 
 	$hooks = array(
-		"base_page-title" => "Neuer Titel"
+		"base_fruits" => "Wow",
+		"base_fruits_banana" => array( "wusa" => "wow" ),
+		"base_fruits_banana_wusa" => "Deep Banana",
 	);
 
 	$content = \Templax\Templax::parse( "base", $markup, $hooks );

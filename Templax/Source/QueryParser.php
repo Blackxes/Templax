@@ -25,31 +25,40 @@ class QueryParser {
 	public function __construct() {}
 
 	/**
-	 * parse entrance - parses the request by the given query
+	 * renders the inner context when the value is not null
+	 * the value (when not array) are casted into string
 	 * 
-	 * @param \Templax\Source\Models\Query $query - the query
+	 * keys of the case command can also server as value selector
+	 * just use the same name for the case as marker
 	 * 
-	 * @return \Templax\Source\Models\Response|null
+	 * @param \Templax\Source\Models\Query $query - the processing query
+	 * 
+	 * @return \Templax\Source\Models\Response
 	 */
-	public function parse( Models\Query $query ) {
+	public function case( Models\Query $query ) {
 
-		// render check will cancel everything
-		if ( !$query->options["render"] )
-			return null;
+		if ( !$query->getKey() )
+			return new Models\Response();
 		
-		// when a regular marker
-		if ( is_null($query->key) )
-			return new Models\Response( null, $query->value );
+		$area = $this->getTemplateArea( $query );
 		
-		// call request function and parse the query
-		if ( method_exists($this, $query->request) ) {
+		// dont render when the value does not exists or is empty
+		$value = $query->getValue();
 
-			$func = $query->request;
-			return $this->$func( $query );
-		}
+		if ( $value == "" || is_array($value) && empty($value) )
+			return new Models\Response( $area["full"], "" );
+		
+		// use the markup or create a markup with $query->key => $query->value
+		$value = $query->getValue();
 
-		// on no match at all
-		return null;
+		$content = \Templax\Templax::parse(
+			$area["template"],
+			is_array($value) ? $value : array( $query->getKey() => $value),
+			array(),
+			$query->getProcess()
+		);
+
+		return new Models\Response( $area["full"], $content );
 	}
 
 	/**
@@ -60,31 +69,167 @@ class QueryParser {
 	 * @return \Templax\Source\Models\Response
 	 */
 	public function foreach( Models\Query $query ) {
-
-		// when no key no value for the foreach can be used
-		if ( is_null($query->key) )
-			return null;
 		
 		// get command area
 		$area = $this->getTemplateArea( $query );
 
 		// when no rendering is allowed return and define the area as replacement
-		if ( !$query->getOption("render") || !is_array($query->value) )
+		if ( !$query->getOption("render") || !is_array($query->getValue()) )
 			return new Models\Response( $area["full"], null );
 		
 		// build content
 		$content = "";
 		
-		foreach( $query->value as $id => $markup ) {
+		foreach( $query->getValue() as $id => $markup ) {
+
+			// check for a hook
+			$markupValue = \Templax\Templax::$rParser->getHookValueFromCommandContext( $query, $id, $markup );
+			
+			// parse content (with the possible value from the hook)
 			$content .= \Templax\Templax::parse(
-				new Models\Template( (string) $id, $area["template"], null, null, true ),
-				$markup, 
-				null,
-				$query->process
+				new Models\Template( (string) $id, $area["template"] ),
+				(array) $markupValue,
+				array(),
+				$query->getProcess()
 			);
 		}
 		
 		return new Models\Response( $area["full"], $content );
+	}
+
+	/**
+	 * extracts a substring from a template
+	 * 
+	 * @param \Templax\Source\Models\Query $query - the processing query
+	 */
+	public function getTemplateArea( Models\Query $query ) {
+
+		preg_match( $GLOBALS["Templax"]["ExtractionRegex"]["ExtractArea"]( $query ), $query->getContext(), $match );
+
+		// area => describes the complete match of the regex
+		// template => describes the area within the marker
+		//
+		return array( "full" => (string) $match[0], "template" => (string) $match[1] );
+	}
+
+	/**
+	 * behave just like the "case" command except the value has to be boolean
+	 * and defines wether the inner context is rendered or not
+	 * 
+	 * the markup is defined in the command value of the command
+	 * 
+	 * @param \Templax\Source\Models\Query $query - the processing query
+	 * 
+	 * @return \Templax\Source\Models\Response
+	 */
+	public function if( Models\Query $query ) {
+		
+		if ( !$query->getKey() )
+			return new Models\Response();
+		
+		$area = $this->getTemplateArea( $query );
+
+		// check render condition
+		if ( (bool) !$query->getValue() )
+			return new Models\Response( $area["full"], "" );
+
+		$content = \Templax\Templax::parse(
+			$area["template"],
+			(array) $query->getCommandValue(),
+			array(), 
+			$query->getProcess()
+		);
+
+		return new Models\Response( $area["full"], $content );
+	}
+
+	/**
+	 * parse entrance - parses the request by the given query
+	 * 
+	 * @param \Templax\Source\Models\Query $query - the query
+	 * 
+	 * @return \Templax\Source\Models\Response|null
+	 */
+	public function parse( Models\Query $query ) {
+
+		// render check will cancel everything
+		if ( !((bool) $query->getOption("render")) )
+			return new Models\Response();
+		
+		// since this condition mostly fails
+		// returns the default earlier than processing through the function
+		if ( !method_exists($this, $query->getRequest()) )
+			return new Models\Response( null, $query->getValue() );
+
+		// call request function and parse the query
+		$func = $query->getRequest();
+
+		return $this->$func( $query );
+	}
+
+	/**
+	 * replaces the rule with the requested template
+	 * 
+	 * @param \Templax\Source\Models\Query $query - the processing query
+	 * 
+	 * @return \Templax\Source\Models\Response
+	 */
+	public function template( Models\Query $query ) {
+
+		if ( !$query->getOption("render") || !$query->getKey() )
+			return Models\Response();
+		
+		// when the template does not exists return this query as a post query
+		// there is a change that a templateInline might exist
+		if ( !\Templax\Templax::$tManager->has($query->getKey()) ) {
+
+			// avoid recursive post quering when the template just doesnt exist
+			// by checking wether a post query already has been defined
+			if ( is_null(!$query->getPost) )
+				return new Models\Response( $query->getRawRule(), $query->getRawRule(), $query );
+			
+			return new Models\Response( $query->getRawRule(), "" );
+		}
+
+		// substitution
+		$value = $query->getValue();
+
+		$content = \Templax\Templax::parse( $query->getKey(), (array) $value, array(), $query->getProcess() );
+
+		return new Models\Response( $query->getRawRule(), $content );
+	}
+
+	/**
+	 * registers (and replaces the rule with) the template
+	 * 
+	 * Note: use "_options" and "_markup" to define the associated defaults
+	 * 
+	 * @param \Templax\Source\Models\Query $query - the processing query
+	 * 
+	 * @return \Templax\Source\Models\Response
+	 */
+	public function templateInline( Models\Query $query ) {
+
+		if ( !$query->getOption("render") || !$query->getKey() )
+			return new Models\Response();
+		
+		$area = $this->getTemplateArea( $query );
+
+		\Templax\Templax::$tManager->registerTemplate(
+			$query->getKey(),
+			$area["template"],
+			(array) $query->getCommandValue()["_markup"],
+			(array) $query->getCommandValue()["_options"]
+		);
+
+		// predeclare response because the content might change
+		// when this template shall be rendered inline
+		$response = Models\Response( $query->getRawRule(), "" );
+
+		if ( $query->getOption("renderInline") )
+			$response->setValue( \Templax\Templax::parse($query->getKey(), array(), array(), $query->getProcess()) );
+		
+		return $response;
 	}
 
 	/**
@@ -97,155 +242,16 @@ class QueryParser {
 	public function templateSelect( Models\Query $query ) {
 
 		// no template can be selected when the key is missing
-		if ( is_null($query->key) )
-			return null;
+		if ( is_null($query->getKey()) )
+			return Models\Response();
 
 		// check template existance
-		if ( !\Templax\Templax::$tManager->has($query->value) )
-			return new Models\Response( $query->rawRule, "" );
+		if ( !\Templax\Templax::$tManager->has($query->getValue()) )
+			return new Models\Response( $query->getRawRule(), "" );
 		
-		$content = \Templax\Templax::parse( $query->value, $query->commandValue );
+		$content = \Templax\Templax::parse( $query->getValue(), $query->getCommandValue(), array(), $query->getProcess() );
 
-		return new Models\Response( $query->rawRule, $content );
-	}
-
-	
-
-	//_________________________________________________________________________________________
-	// replaces the rule with the requested template
-	//
-	// param1 (\Templax\Source\Models\Query) expects the query
-	//
-	// return \Templax\Source\Models\Response
-	//
-	public function template( Models\Query $query ) {
-
-		if ( !$query->getOption("render") || !$query->key )
-			return Models\Response();
-		
-		$response = new Models\Response( $query->rawRule, "" );
-		
-		// when the template doesnt exists return and define as post query
-		// but not when its already a post query
-		if ( !\Templax\Templax::$tManager->has($query->key) ) {
-
-			if ( is_null(!$query->postQuery) )
-				return new Models\Response( $query->rawRule, $query->rawRule, $query );
-
-			return new Models\Response( $query->rawRule, "" );
-		}
-
-		$value = $query->value;
-
-		$content = \Templax\Templax::parse( $query->key, ($value && is_array($value)) ? $value : array() );
-		
-		return new Models\Response( $query->rawRule, $content );
-	}
-
-	//_________________________________________________________________________________________
-	// registers the given template inline
-	//
-	// param1 ( \Templax\Source\Models\Query ) expects the query
-	//
-	// return \Templax\Source\Models\Response
-	//
-	public function templateInline( Models\Query $query ) {
-
-		if ( !$query->getOption("render") || !$query->getKey() )
-			return new Models\Response();
-		
-		$response = new Models\Response();
-
-		// extact inline template
-		preg_match($GLOBALS["Templax"]["ExtractionRegex"]["extractArea"]( $query ),
-			$query->getTemplate(), $templateMatch);
-		
-		// register new template with the given markup and options
-		// markup is being filtered for everything but the _options property
-		$value = $query->getValue();
-		$key = $query->getKey();
-
-		$markup = array_filter( is_array($value) ? $value : array(), function ($key) { return ($key != "_options"); }, ARRAY_FILTER_USE_KEY );
-		$options = is_array( $value["_options"] ) ? $value["_options"] : array();
-
-		$response->setReplacement( $templateMatch[0] );
-
-		$result = \Templax\Templax::getTemplateManager()->registerTemplateInstance(
-			new Models\Template( $key, $templateMatch[1], $markup, $options )
-		);
-		
-		return $response;
-	}
-
-	//_________________________________________________________________________________________
-	// parses the part within the case command when the requested key is not null or false
-	//
-	// param1 (\Templax\Source\Models\Query) expects the query
-	//
-	// return \Templax\Source\Models\Response
-	//
-	public function case( Models\Query $query ) {
-
-		if ( !$query->key )
-			return new \Templax\Source\Models\Response();
-		
-		preg_match($GLOBALS["Templax"]["ExtractionRegex"]["extractArea"]( $query ),
-			$query->template, $templateMatch);
-
-		if ( !$query->value )
-			return new Models\Response( ($templateMatch) ? $templateMatch[0] : $query->rawRule, "" );
-		
-		$markup = $query->value;
-
-		// when the markup is not an array define the value in the markup as the key itself
-		$content = \Templax\Templax::parse(
-			$templateMatch[1], ( is_array($markup) ) ? $markup : array( $query->key => $markup)
-		);
-
-		return new Models\Response( $templateMatch[0], $content );
-	}
-
-	//_________________________________________________________________________________________
-	// parses the part within the if command when the key within the markup returns true
-	//
-	// param1 (\Templax\Source\Models\Query) expects the query
-	//
-	// return \Templax\Source\Models\Response
-	//
-	public function if ( Models\Query $query ) {
-
-		if ( !$query->key )
-			return new Models\Response();
-		
-		preg_match($GLOBALS["Templax"]["ExtractionRegex"]["extractArea"]( $query ),
-			$query->template, $templateMatch);
-
-		if ( !$query->process->queryMarkup[ $query->key ] )
-			return new Models\Response( ($templateMatch) ? $templateMatch[0] : $query->rawRule, "" );
-		
-		$markup = $query->commandValue;
-		$content = \Templax\Templax::parse(
-			$templateMatch[1],
-			is_array($markup) ? $markup : array()
-		);
-
-		return new Models\Response( $templateMatch[0], $content );
-		
-	}
-
-	/**
-	 * extracts a substring from a template
-	 * 
-	 * @param \Templax\Source\Models\Query $query - the processing query
-	 */
-	public function getTemplateArea( Models\Query $query ) {
-
-		preg_match( $GLOBALS["Templax"]["ExtractionRegex"]["extractArea"]( $query ), $query->template, $match );
-
-		// area => describes the complete match of the regex
-		// template => describes the area within the marker
-		//
-		return array( "full" => (string) $match[0], "template" => (string) $match[1] );
+		return new Models\Response( $query->getRawRule(), $content );
 	}
 }
 

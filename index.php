@@ -12,18 +12,20 @@
 /*********************************************************************************************/
 
 require_once ( "./Templax/Templax.php" );
-require_once ( "./Dependencies/Logfile/Logfile.php" );
 
 //_____________________________________________________________________________________________
 	// load template
 	\Templax\Templax::Init( array(
-		"base" => array( "file" => __DIR__ . "\\index.html", "marker" => "base" ),
+		"base" => array( "file" => __DIR__ . "\\index.html", "marker" => "base", "markup" => array( "wusa" => 43) ),
 		"examples" => array( "file" => __DIR__ . "\\index.html", "marker" => "examples" )
 	));
 
 	// scan examples and build markup
 	$markup = array(
-		"content" => "examples"
+		"content" => "examples",
+		"_options" => array(
+			"render" => 1
+		)
 	);
 	$examples = preg_grep("/^\./", scandir("./Examples"), PREG_GREP_INVERT );
 
@@ -36,7 +38,7 @@ require_once ( "./Dependencies/Logfile/Logfile.php" );
 		}
 	}
 	
-	$content = \Templax\Templax::parse("base", $markup);
+	$content = \Templax\Templax::parse("base", $markup );
 	
 	echo $content;
 

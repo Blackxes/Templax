@@ -1,0 +1,23 @@
+
+# namespaces are initially global and may differ from the real applications class namespaces
+
+# values templax initially has to be passed to to start a parsing process
+# the template is required in all cases - the markup and hooks can be ignored
+parsing set
+- template / required
+- markup
+- hooks
+
+[Templax]
+
+// parses the requested template based on the given markup and hooks
+// by preparing the given params into a parsing set
+::parse( template, markup, hooks, options )
+
+// builds a parsing set out of the given params
+::buildParsingSet( template, markup, hooks, options )
+@return \ParsingSet;
+
+// processes the parsing set into content
+::processParsingSet( $pSet, $callback )
+@return string

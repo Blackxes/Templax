@@ -11,118 +11,127 @@
 
 namespace Templax\Source\Models;
 
+require_once( TEMPLAX_ROOT . "/Source/Models/ParsingSet.php" );
+
 //_____________________________________________________________________________________________
-class Process {
-
-	/**
-	 * the process id
-	 * 
-	 * @var int
-	 */
-	public $id;
-
-	/**
-	 * current template
-	 * 
-	 * @var \Templax\Source\Models\Template
-	 */
-	public $template;
-
-	/**
-	 * the user defined markup for this template
-	 * 
-	 * @var array|null
-	 */
-	public $userMarkup;
-
-	/**
-	 * the markup that will be used in the query
-	 * this one is merged with some extra marker and the user markup
-	 * 
-	 * @var array
-	 */
-	public $queryMarkup = array();
-
-	/**
-	 * process options
-	 * 
-	 * @var array
-	 */
-	public $options = array();
+class Process extends namespace\ParsingSet {
 
 	/**
 	 * current query
 	 * 
 	 * @var \Templax\Source\Models\Query
 	 */
-	public $query;
+	private $currentQuery;
 
 	/**
-	 * describes wether this process is a main process
-	 * main processes are the ones who contains the initial template
-	 * the one the user requested / not the subprocesses that follows afterwards
-	 */
-	public $isMainProcess = false;
-
-	/**
-	 * contains values for keys within the markup
-	 * when the template processing reaches a rule signature
-	 * that matches one of these hooks
-	 * the value of this hook will be used for the further processing of "this" rule
+	 * the process id
 	 * 
-	 * but only on the level below the rule including the rule itself
-	 * 
-	 * @var array
+	 * @var int
 	 */
-	public $hooks;
-
-	/**
-	 * the parent process of this one
-	 * 
-	 * @var \Templax\Source\Models\Process|null
-	 */
-	public $parent;
+	private $id;
 	
 	/**
 	 * construction
 	 * 
-	 * Todo: complete function header
+	 * @param int $id - process id
+	 * @param \Templax\Source\Models\ParsingSet $set - the set for the template processing
 	 */
-	public function __construct( int $id, namespace\ParsingSet $set, int $parent = null )
-	{
+	public function __construct( int $id, namespace\ParsingSet $set ) {
+
+		parent::__construct( $set );
+
+		// var_dump($this->parent);
+
 		$this->id = $id;
-		$this->template = $set->source;
-		$this->userMarkup = $set->markup;
-		$this->queryMarkup = array();
-		$this->options = $set->options;
-		$this->hooks = $set->hooks;
-
-		$this->parent = null;
-	}
-
-	/**
-	 * returns the value of a hook when defined else null
-	 * 
-	 * @param string $ruleSignature - the rule signature
-	 * 
-	 * @return mixed|null
-	 */
-	public function getHook( string $ruleSignature ) {
-
-		if ( isset($this->hooks[$ruleSignature]) )
-			return $this->hooks[$ruleSignature];
 		
-		return null;
+		// premerge the defaults
+		$this->rMergeOptions( $GLOBALS["Templax"]["Defaults"]["Process"]["BaseOptions"] );
+		$this->rMergeOptions( $this->template->getOptions() );
+		$this->rMergeMarkup( $this->template->getMarkup() );
 	}
 
 	/**
-	 * returns the value of a option
+	 * returns the process id
 	 * 
-	 * @return mixed
+	 * @return int
 	 */
-	public function getOption( $option ) {
+	public function getId() {
 
-		return $this->options[ $option ];
+		return $this->id;
+	}
+
+	/**
+	 * returns the template
+	 * 
+	 * @var \Templax\Source\Models\Template
+	 */
+	public function getTemplate() {
+
+		return $this->template;
+	}
+
+	/**
+	 * returns the next template of the parents or even this one
+	 * which have a valid template id and serve as a root template
+	 * 
+	 * @return \Templax\Source\Models\Template
+	 */
+	public function getNextRootTemplate() {
+
+		// when no parent exists or this template is a root itself
+		if ( is_null($this->parent) || \Templax\Templax::$tManager->has($this->template->getId()) )
+			return $this->template;
+		
+		// or when valid get the parents template
+		else if ( !$this->parent->template->isSub() )
+			return $this->parent->template;
+		
+		// one of the parents has a valid template.. so go for it
+		return $this->parent->getNextRootTemplate();
+	}
+
+	/**
+	 * returns the current query
+	 * 
+	 * @return \Templax\Source\Models\Query|null
+	 */
+	public function getCurrentQuery() {
+		
+		return $this->currentQuery;
+	}
+
+	/**
+	 * returns a reference to the current query
+	 * 
+	 * @return \Templax\Source\Models\Query|null - null when no query is defined
+	 */
+	public function &getCurrentQueryRef() {
+
+		return $this->currentQuery;
+	}
+
+	/**
+	 * returns true when this process is the main process otherwise false
+	 * 
+	 * @return boolean
+	 */
+	public function isMainProcess() {
+
+		// the main process has always the id 0
+		return !( (bool) $this->id );
+	}
+
+	/**
+	 * sets the current query
+	 * 
+	 * @param \Templax\Source\Models\Query $query - query
+	 * 
+	 * @return $this
+	 */
+	public function setCurrentQuery( namespace\Query $query ) {
+
+		$this->currentQuery = $query;
+		return $this;
 	}
 }
 

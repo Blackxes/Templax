@@ -11,42 +11,24 @@
 
 namespace Templax\Source\Models;
 
+require_once( TEMPLAX_ROOT . "/Source/Models/BaseProcessSet.php" );
+
 //_____________________________________________________________________________________________
-class Template {
+class Template extends namespace\BaseProcessSet {
 
 	/**
-	 * contains the template id - when null the template represents as a subtemplate
+	 * contains the template id - when null this template is a subtemplate
 	 * 
 	 * @var string|null
 	 */
-	public $id = null;
+	private $id = null;
 
 	/**
 	 * contains the actual value of the template
 	 * 
 	 * @var string|null
 	 */
-	public $value = null;
-
-	/**
-	 * base markup for this template
-	 * this template will be overwritten by any given template
-	 * 
-	 * @var array|null
-	 */
-	public $markup = null;
-
-	/**
-	 * base options for this template
-	 * 
-	 * @var array|null
-	 */
-	public $options = null;
-
-	/**
-	 * defines wether this template is usable or contains invalid value combinations
-	 */
-	private $valid = false;
+	private $value = null;
 
 	/**
 	 * construction
@@ -54,17 +36,45 @@ class Template {
 	 * @param string|null $id - the template id
 	 * @param string|null $template - the actual template value
 	 * @param array $markup - the markup
-	 * @param array $options - the template options - not the default rule options!
-	 * @param boolean $isSub - defines wether this template is a subtemplate or not
+	 * @param array $options - the template options
 	 */
-	public function __construct( ?string $id, ?string $template, ?array $markup = array(), ?array $options = array(), bool $isSub = false ) {
+	public function __construct( string $id = null, string $value = "", array $markup = array(), array $options = array() ) {
 		
 		$this->id = $id;
-		$this->value = $template;
-		$this->markup = $markup;
-		$this->options = $options;
+		$this->value = $value;
 
-		$this->isSub = $isSub;
+		parent::__construct( $markup, $options );
+	}
+
+	/**
+	 * returns the id
+	 * 
+	 * @return int
+	 */
+	public function getId() {
+
+		return $this->id;
+	}
+
+	/**
+	 * returns the template content/value
+	 * 
+	 * @return string
+	 */
+	public function getValue() {
+
+		return (string) $this->value;
+	}
+
+	/**
+	 * returns true on the template being a subtemplate - else false
+	 * 
+	 * @return boolean
+	 */
+	public function isSub() {
+		
+		// its sub when the id null or doesnt exist in the template manager registry
+		return is_null( $this->id ) || !\Templax\Templax::$tManager->has( $this->id );
 	}
 
 	/**
@@ -73,23 +83,24 @@ class Template {
 	 * 
 	 * @return boolean
 	 */
-	public function validate() {
+	public function verify() {
 
 		// the template is valid in terms of id and template value
 		// when the template behind the id is defined and registered
 		// or null and the value is not null
-		//
+		
 		// when subtemplate is doesnt matter if the id or content is defined
 		// its straight up valid because nothing is expected from sub templates
-		//
-		if ( $this->isSub )
-			$this->valid = true;
+		if ( $this->isSub() )
+			return true;
+
+		// otherwise on "real" templates they need to exists
+		// it does not have to contain content but rather having a registered id
+		else if ( !is_null($this->id) && \Templax\Templax::$tManager->has($this->id) )
+			return true;
 		
-		// otherwise on "real" templates they need to exists or act like a subtemplate
-		else if ( !is_null($this->id) || is_null($this->value) || \Templax\Templax::$tManager->has($this->id) )
-			$this->valid = false;
-		
-		return $this->valid;
+		// when nothing matches - this template is invalid
+		return false;
 	}
 }
 

@@ -11,7 +11,7 @@
 
 /*********************************************************************************************/
 
-require_once ( "../../Dependencies/Logfile/Logfile.php" );
+// require_once ( "../../Dependencies/Logfile/Logfile.php" );
 require_once ( "../../Templax/Templax.php" );
 
 //_____________________________________________________________________________________________
@@ -32,7 +32,7 @@ require_once ( "../../Templax/Templax.php" );
 	// when the template is not found an empty string is used
 	//
 	$markup = array(
-		"login-status" => "logged_out",
+		"login-status" => "logged_in",
 		"templateSelect-login-status" => array(
 			"user" => "Blackxes"
 		)

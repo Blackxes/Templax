@@ -11,7 +11,7 @@
 
 /*********************************************************************************************/
 
-require_once ( "../../Dependencies/Logfile/Logfile.php" );
+// require_once ( "../../Dependencies/Logfile/Logfile.php" );
 require_once ( "../../Templax/Templax.php" );
 
 //_____________________________________________________________________________________________
@@ -27,10 +27,14 @@ require_once ( "../../Templax/Templax.php" );
 		"page-title" => "Request Case",
 		"image" => "http://via.placeholder.com/120x120",
 		"firstname" => "Alexander",
-		"lastname" => false
+		"lastname" => "Bassov"
 	);
 
-	$content = \Templax\Templax::parse("base", $markup);
+	$hooks = array(
+		"base_image" => "http://via.placeholder.com/120x125"
+	);
+
+	$content = \Templax\Templax::parse("base", $markup, $hooks );
 	echo $content;
 
 //_____________________________________________________________________________________________

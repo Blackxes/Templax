@@ -46,7 +46,9 @@ class TemplateManager {
 	 * 		array(
 	 * 			"template_id" => array(
 	 * 				"file" => "path/To/File/Including/FileName/And.Extension"
-	 * 				"marker" => ###MARKER_THAT_SURROUNDS_TEMPLATE###
+	 * 				"marker" => ###MARKER_THAT_SURROUNDS_TEMPLATE###,
+	 * 				"options" => array(), // default options
+	 * 				"markup" => array() // default markup
 	 * 			),
 	 * 			etc.
 	 * 		)
@@ -121,14 +123,11 @@ class TemplateManager {
 	 * 
 	 * @param string $id - the template id
 	 * 
-	 * @return \Templax\Source\Models\Template|null
+	 * @return \Templax\Source\Models\Template|null - instance or null when ot exists
 	 */
 	public function &get( $id ) {
-
-		if ( !$this->has($id) )
-			return null;
 		
-		return $this->templates[$id];
+		return $this->templates[ $id ];
 	}
 
 	/**
@@ -150,7 +149,7 @@ class TemplateManager {
 	 */
 	public function has( $id ) {
 		
-		return is_string($id) && isset($this->templates[$id]);
+		return is_string( $id ) && isset( $this->templates[$id] );
 	}
 
 	/**
@@ -161,7 +160,7 @@ class TemplateManager {
 	 * 
 	 * @return boolean
 	 */
-	public function register( string $id, array $args ) {
+	public function registerSet( string $id, array $args ) {
 		
 		if ( empty($id) || empty($args) )
 			return print_r( "Templax: invalid values in registration", false );
@@ -182,6 +181,25 @@ class TemplateManager {
 
 		$this->templates[$id] = new Models\Template( $id, $tContent, $args["markup"], $args["options"] );
 
+		return true;
+	}
+
+	/**
+	 * registers a template by a raw string
+	 * duplication of templates is configurable
+	 * 
+	 * @param string $id - the template id
+	 * @param string $value - the template value
+	 * 
+	 * @return boolean - true on success otherwise false
+	 */
+	public function registerTemplate( string $id, string $value, array $markup = array(), array $options = array() ) {
+
+		if ( $this->has($id) || $value == "" )
+			return false;
+		
+		$this->template[ $id ] = new Models\Template( $id, $value, $markup, $options );
+		
 		return true;
 	}
 
@@ -231,7 +249,7 @@ class TemplateManager {
 			// invalid when no valid values are given
 			else $valid = false;
 
-			if ( (!$valid || !$this->register($id, $regArgs)) && $cancelOnFail )
+			if ( (!$valid || !$this->registerSet($id, $regArgs)) && $cancelOnFail )
 				return false;
 		}
 
