@@ -98,12 +98,15 @@ class QueryParser {
 	}
 
 	/**
-	 * extracts a substring from a template
+	 * extracts a substring from a template ( based on the given query )
 	 * 
 	 * @param \Templax\Source\Models\Query $query - the processing query
 	 */
 	public function getTemplateArea( Models\Query $query ) {
 
+		// use the query when given else extract the key area
+		// $regex = 
+		// if ( !is_null)
 		preg_match( $GLOBALS["Templax"]["ExtractionRegex"]["ExtractArea"]( $query ), $query->getContext(), $match );
 
 		// area => describes the complete match of the regex
@@ -115,6 +118,10 @@ class QueryParser {
 	/**
 	 * behave just like the "case" command except the value has to be boolean
 	 * and defines wether the inner context is rendered or not
+	 * 
+	 * when the value is not a boolean its not rendered
+	 * casting into boolean results in not wanted behaviour
+	 * such as "false" results in true
 	 * 
 	 * the markup is defined in the command value of the command
 	 * 
@@ -130,7 +137,9 @@ class QueryParser {
 		$area = $this->getTemplateArea( $query );
 
 		// check render condition
-		if ( (bool) !$query->getValue() )
+		$value = $query->getValue();
+
+		if ( !is_bool($value) || !$value )
 			return new Models\Response( $area["full"], "" );
 
 		$content = \Templax\Templax::parse(
@@ -144,11 +153,31 @@ class QueryParser {
 	}
 
 	/**
+	 * parses the ifelse command / behaves just like the regular if else in programming languages
+	 * 
+	 * @param \Templax\Source\Models\Query $query - the processing query
+	 * 
+	 * @return \Templax\Source\Models\Response
+	 */
+	public function ifelse( Models\Query $query ) {
+
+		// var_dump($query);
+
+		// var_dump( $query );
+		$area = $this->getTemplateArea( $query );
+		// var_dump( $query->getCommandValue() );
+		var_dump( $area );
+
+
+		return new Models\Response( $area["full"], "" );
+	}
+
+	/**
 	 * parse entrance - parses the request by the given query
 	 * 
 	 * @param \Templax\Source\Models\Query $query - the query
 	 * 
-	 * @return \Templax\Source\Models\Response|null
+	 * @return \Templax\Source\Models\Response
 	 */
 	public function parse( Models\Query $query ) {
 

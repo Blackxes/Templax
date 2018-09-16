@@ -33,8 +33,8 @@ require_once ( "../../Templax/Templax.php" );
 	);
 
 	$hooks = array(
-		"base_fruits" => "Wow",
-		"base_fruits_banana" => array( "wusa" => "wow" ),
+		// "base_fruits" => "Wow",
+		// "base_fruits_banana" => array( "wusa" => "wow" ),
 		"base_fruits_banana_wusa" => "Deep Banana",
 	);
 

@@ -107,9 +107,15 @@ $GLOBALS["Templax"]["ExtractionRegex"] = array(
 	 * extract X regardless of spaces based on the given query
 	 * String: "rawRule X {{ queryRequest end: queryKey }}"
 	 */
-	"ExtractArea" => function( \Templax\Source\Models\Query $query ) {
+	"ExtractArea" => function( \Templax\Source\Models\Query $query, string $customKey = null ) {
+
+		// custom key has higher prio
+		// building the range as array to avoid checking for the custom key multiple times
+		$range = ( !is_null($customKey) )
+			? array( "start" => "{{\s*{$key}\s*}}", "request" => $customKey, "key" => $customKey )
+			: array( "start" => $query->getRawRule(), "request" => $query->getRequest(), "key" => $query->getKey() );
 		
-		return "/{$query->getRawRule()}(.*){{\s*{$query->getRequest()}\s+end\s*:\s*{$query->getKey()}\s*}}/";
+		return "/{$range["start"]}(.*){{\s*{$range["request"]}\s+end\s*:\s*{$range["key"]}\s*}}/";
 	}
 );
 

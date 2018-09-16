@@ -19,20 +19,21 @@ require_once ( "../../Templax/Templax.php" );
 	// load template
 	\Templax\Templax::Init(
 		array(
-			"base" => __DIR__ . "/index.html",
+			"base" => array( "file" => __DIR__ . "/index.html", "marker" => "base" )
 		)
 	);
-
+	
 	$markup = array(
-		"health" => true,
-		"if-health" => array(
-			"armor" => "450",
-			"wusa" => "null Wusa"
+		"elseif-login-state" => array(
+			"if" => array(
+				
+			),
+			"else" => array(
+
+			)
 		),
-		"if-damage" => array(
-			"wow" => "sick"
-		),
-		"damage" => "true"
+		"login-state" => array(
+		)
 	);
 
 	$content = \Templax\Templax::parse( "base", $markup );
