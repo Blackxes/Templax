@@ -11,32 +11,34 @@
 
 /*********************************************************************************************/
 
-// require_once ( "../../Dependencies/Logfile/Logfile.php" );
-require_once ( "../../Templax/Templax.php" );
+require_once ( __DIR__ . "/../../v4/Templax.php" );
 
 //_____________________________________________________________________________________________
+	// parser instance
+	$parser = new \Templax\Templax();
 
 	// load template
-	\Templax\Templax::Init(
+	$parser->Init(
 		array(
 			"base" => array( "file" => __DIR__ . "/index.html", "marker" => "base" )
 		)
 	);
+
+	$loginState = function() {
+		return null;
+	};
 	
 	$markup = array(
-		"elseif-login-state" => array(
-			"if" => array(
-				
-			),
-			"else" => array(
-
-			)
+		"if-login-state" => array(
+			"message" => "ifstate"
 		),
-		"login-state" => array(
-		)
+		"else-login-state" => array(
+			"message" => "elsestate"
+		),
+		"login-state" => $loginState
 	);
 
-	$content = \Templax\Templax::parse( "base", $markup );
+	$content = $parser->parse( "base", $markup );
 	echo $content;
 
 //_____________________________________________________________________________________________

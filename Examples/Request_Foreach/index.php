@@ -11,13 +11,14 @@
 
 /*********************************************************************************************/
 
-// require_once ( "../../Dependencies/Logfile/Logfile.php" );
-require_once ( "../../Templax/Templax.php" );
+require_once ( __DIR__ . "/../../v4/Templax.php" );
 
 //_____________________________________________________________________________________________
+	// parser instance
+	$parser = new \Templax\Templax();
 
 	// load template
-	\Templax\Templax::Init(
+	$parser->Init(
 		array(
 			"base" => __DIR__ . "/index.html"
 		)
@@ -34,11 +35,11 @@ require_once ( "../../Templax/Templax.php" );
 
 	$hooks = array(
 		// "base_fruits" => "Wow",
-		// "base_fruits_banana" => array( "wusa" => "wow" ),
-		"base_fruits_banana_wusa" => "Deep Banana",
+		// "base_fruits_banana" => array( "wow" => "ss" ),
+		"base_fruits_banana_label" => "Deep Banana",
 	);
 
-	$content = \Templax\Templax::parse( "base", $markup, $hooks );
+	$content = $parser->parse( "base", $markup, $hooks );
 	echo $content;
 
 //_____________________________________________________________________________________________

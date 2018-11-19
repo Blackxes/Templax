@@ -11,11 +11,14 @@
 
 /*********************************************************************************************/
 
-require_once ( "./Templax/Templax.php" );
+error_reporting( E_ALL & ~E_NOTICE );
+
+require_once ( __DIR__ . "/v4/Templax.php" );
 
 //_____________________________________________________________________________________________
 	// load template
-	\Templax\Templax::Init( array(
+	$parser = new \Templax\Templax();
+	$parser->Init( array(
 		"base" => array( "file" => __DIR__ . "\\index.html", "marker" => "base", "markup" => array( "wusa" => 43) ),
 		"examples" => array( "file" => __DIR__ . "\\index.html", "marker" => "examples" )
 	));
@@ -38,7 +41,7 @@ require_once ( "./Templax/Templax.php" );
 		}
 	}
 	
-	$content = \Templax\Templax::parse("base", $markup );
+	$content = $parser->parse("base", $markup );
 	
 	echo $content;
 

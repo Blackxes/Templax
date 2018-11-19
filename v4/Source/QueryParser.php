@@ -15,6 +15,7 @@ use \Templax\Source\Models;
 
 require_once( TEMPLAX_ROOT . "/Templax.php" );
 require_once( TEMPLAX_ROOT . "/Source/Models/Response.php" );
+require_once( TEMPLAX_ROOT . "/Source/Classes/Miscellaneous.php" );
 
 //_____________________________________________________________________________________________
 class QueryParser {
@@ -37,25 +38,25 @@ class QueryParser {
 	 */
 	public function case( Models\Query $query ) {
 
-		if ( !$query->getKey() )
+		if ( !$query->get("key") )
 			return new Models\Response();
 		
 		$area = $this->getTemplateArea( $query );
 		
 		// dont render when the value does not exists or is empty
-		$value = $query->getValue();
+		$value = $query->get("value");
 
 		if ( $value == "" || is_array($value) && empty($value) )
 			return new Models\Response( $area["full"], "" );
 		
 		// use the markup or create a markup with $query->key => $query->value
-		$value = $query->getValue();
+		$value = $query->get( "value" );
 
-		$content = \Templax\Templax::parse(
+		$content = \Templax\Templax::$instance->parse(
 			$area["template"],
-			is_array($value) ? $value : array( $query->getKey() => $value),
+			is_array($value) ? $value : array( $query->get("key") => $value),
 			array(),
-			$query->getProcess()
+			$query->get("process")
 		);
 
 		return new Models\Response( $area["full"], $content );
@@ -74,23 +75,26 @@ class QueryParser {
 		$area = $this->getTemplateArea( $query );
 
 		// when no rendering is allowed return and define the area as replacement
-		if ( !$query->getOption("render") || !is_array($query->getValue()) )
+		if ( !$query->get(["options", "render"]) || !is_array($query->get("value")) )
 			return new Models\Response( $area["full"], null );
 		
 		// build content
 		$content = "";
 		
-		foreach( $query->getValue() as $id => $markup ) {
+		foreach( $query->get("value") as $id => $markup ) {
 
 			// check for a hook
-			$markupValue = \Templax\Templax::$rParser->getHookValueFromCommandContext( $query, $id, $markup );
+			$markupValue = \Templax\Templax::$instance->rParser->getHookValueFromCommandContext( $query, $id, $markup );
+
+			// add the index to the markup
+			$markup["tx-index"] = $id;
 			
 			// parse content (with the possible value from the hook)
-			$content .= \Templax\Templax::parse(
+			$content .= \Templax\Templax::$instance->parse(
 				new Models\Template( (string) $id, $area["template"] ),
 				(array) $markupValue,
 				array(),
-				$query->getProcess()
+				$query->get("process")
 			);
 		}
 		
@@ -107,7 +111,7 @@ class QueryParser {
 		// use the query when given else extract the key area
 		// $regex = 
 		// if ( !is_null)
-		preg_match( $GLOBALS["Templax"]["ExtractionRegex"]["ExtractArea"]( $query ), $query->getContext(), $match );
+		preg_match( $GLOBALS["Templax"]["ExtractionRegex"]["ExtractArea"]( $query ), $query->get("context"), $match );
 
 		// area => describes the complete match of the regex
 		// template => describes the area within the marker
@@ -131,25 +135,32 @@ class QueryParser {
 	 */
 	public function if( Models\Query $query ) {
 		
-		if ( !$query->getKey() )
+		if ( !$query->get("key") )
 			return new Models\Response();
 		
+		// from here the area is always needed to replace based on the result
+		// the whole section of the rule
 		$area = $this->getTemplateArea( $query );
 
-		// check render condition
-		$value = $query->getValue();
+		// store value result into the data cache to let the possible
+		// else command know wether to render or not
+		$value = $query->get("value");
 
-		if ( !is_bool($value) || !$value )
-			return new Models\Response( $area["full"], "" );
+		// dont render wether if or else when no boolean is given
+		if ( !is_bool($value) )
+			return new Models\Response( $area["full"] );
 
-		$content = \Templax\Templax::parse(
-			$area["template"],
-			(array) $query->getCommandValue(),
-			array(), 
-			$query->getProcess()
-		);
+		// exit with filled response when result resolves to boolean false
+		else if ( !$value )
+			return new Models\Response( $area["full"], null, null, null, array( $query->get("commandSignature") => false ) );
+		
+		$content = \Templax\Templax::$instance->parse( $area["template"], (array) $query->get("commandValue"), array(), $query->get("process") );
 
-		return new Models\Response( $area["full"], $content );
+		// let other commands know this command succeeded
+		$dataCache = array( $query->get("commandSignature") => true );
+
+		// return with cached data
+		return new Models\Response( $area["full"], $content, null, null, $dataCache );
 	}
 
 	/**
@@ -159,17 +170,25 @@ class QueryParser {
 	 * 
 	 * @return \Templax\Source\Models\Response
 	 */
-	public function ifelse( Models\Query $query ) {
+	public function else( Models\Query $query ) {
 
-		// var_dump($query);
+		if ( !$query->get("key") )
+			return new Models\Response();
 
-		// var_dump( $query );
 		$area = $this->getTemplateArea( $query );
-		// var_dump( $query->getCommandValue() );
-		var_dump( $area );
 
+		// only render when the associated "if" command is not null and boolean false
+		$result = $query->get(["dataCache", "if-{$query->get("key")}"]);
 
-		return new Models\Response( $area["full"], "" );
+		if ( is_null($result) || $result )
+			return new Models\Response( $area["full"], null );
+		
+		$content = \Templax\Templax::$instance->parse( $area["template"], (array) $query->get("commandValue"), array(), $query->get("process") );
+
+		// let other commands know the else succeeded - at the moment i dont know why - but its cool to use the datacache for reasons like this - long comment right?
+		$dataCache = array( $query->get("commandSignature") => true );
+		
+		return new Models\Response( $area["full"], $content, null, null, $dataCache );
 	}
 
 	/**
@@ -182,18 +201,16 @@ class QueryParser {
 	public function parse( Models\Query $query ) {
 
 		// render check will cancel everything
-		if ( !((bool) $query->getOption("render")) )
+		if ( !((bool) $query->get(["options", "render"])) )
 			return new Models\Response();
 		
 		// since this condition mostly fails
 		// returns the default earlier than processing through the function
-		if ( !method_exists($this, $query->getRequest()) )
-			return new Models\Response( null, $query->getValue() );
+		if ( !method_exists($this, $query->get("request")) )
+			return new Models\Response( null, $query->get("value") );
 
 		// call request function and parse the query
-		$func = $query->getRequest();
-
-		return $this->$func( $query );
+		return $this->{ $query->get("request") }( $query );
 	}
 
 	/**
@@ -205,27 +222,27 @@ class QueryParser {
 	 */
 	public function template( Models\Query $query ) {
 
-		if ( !$query->getOption("render") || !$query->getKey() )
+		if ( !$query->get(["options", "render"]) || !$query->get("key") )
 			return Models\Response();
 		
 		// when the template does not exists return this query as a post query
 		// there is a change that a templateInline might exist
-		if ( !\Templax\Templax::$tManager->has($query->getKey()) ) {
+		if ( !\Templax\Templax::$instance->has($query->get("key")) ) {
 
 			// avoid recursive post quering when the template just doesnt exist
 			// by checking wether a post query already has been defined
-			if ( is_null(!$query->getPost) )
-				return new Models\Response( $query->getRawRule(), $query->getRawRule(), $query );
+			if ( is_null($query->get("postQuery")) )
+				return new Models\Response( $query->get("rawRule"), $query->get("rawRule"), $query );
 			
-			return new Models\Response( $query->getRawRule(), "" );
+			return new Models\Response( $query->ge("rawRule"), "" );
 		}
 
 		// substitution
-		$value = $query->getValue();
+		$value = $query->get("value");
 
-		$content = \Templax\Templax::parse( $query->getKey(), (array) $value, array(), $query->getProcess() );
+		$content = \Templax\Templax::$instance->parse( $query->get("key"), (array) $value, array(), $query->get("process") );
 
-		return new Models\Response( $query->getRawRule(), $content );
+		return new Models\Response( $query->get("rawRule"), $content );
 	}
 
 	/**
@@ -271,16 +288,16 @@ class QueryParser {
 	public function templateSelect( Models\Query $query ) {
 
 		// no template can be selected when the key is missing
-		if ( is_null($query->getKey()) )
+		if ( is_null($query->get("key")) )
 			return Models\Response();
 
 		// check template existance
-		if ( !\Templax\Templax::$tManager->has($query->getValue()) )
-			return new Models\Response( $query->getRawRule(), "" );
+		if ( !\Templax\Templax::$instance->has($query->get("value")) )
+			return new Models\Response( $query->get("rawRule"), "" );
 		
-		$content = \Templax\Templax::parse( $query->getValue(), $query->getCommandValue(), array(), $query->getProcess() );
+		$content = \Templax\Templax::$instance->parse( $query->get("value"), $query->get("commandValue"), array(), $query->get("process") );
 
-		return new Models\Response( $query->getRawRule(), $content );
+		return new Models\Response( $query->get("rawRule"), $content );
 	}
 }
 

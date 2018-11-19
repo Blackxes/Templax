@@ -11,13 +11,14 @@
 
 /*********************************************************************************************/
 
-// require_once ( "../../Dependencies/Logfile/Logfile.php" );
-require_once ( "../../Templax/Templax.php" );
+require_once ( __DIR__ . "/../../v4/Templax.php" );
 
 //_____________________________________________________________________________________________
+	// parser instance
+	$parser = new \Templax\Templax();
 
 	// load template
-	\Templax\Templax::Init(
+	$parser->Init(
 		array(
 			"base" => __DIR__ . "/index.html"
 		)
@@ -34,7 +35,7 @@ require_once ( "../../Templax/Templax.php" );
 		"base_image" => "http://via.placeholder.com/120x125"
 	);
 
-	$content = \Templax\Templax::parse("base", $markup, $hooks );
+	$content = $parser->parse( "base", $markup, $hooks );
 	echo $content;
 
 //_____________________________________________________________________________________________

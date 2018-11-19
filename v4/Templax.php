@@ -11,67 +11,74 @@
 
 namespace Templax;
 
+use \Templax\Source;
 use \Templax\Source\Models;
+use \Templax\Source\Classes;
 
 error_reporting( E_ALL & ~E_NOTICE );
 
 define( "TEMPLAX_ROOT", __DIR__, true );
 
-// include engine
+// Basics
 require_once( TEMPLAX_ROOT . "/Configuration.php" );
-require_once( TEMPLAX_ROOT . "/Source/ProcessManager.php" );
+require_once( TEMPLAX_ROOT . "/Source/Classes/ParameterBag.php" );
+require_once( TEMPLAX_ROOT . "/Source/Classes/Miscellaneous.php" );
 
+// components
+require_once( TEMPLAX_ROOT . "/Source/ProcessManager.php" );
 require_once( TEMPLAX_ROOT . "/Source/TemplateManager.php" );
 require_once( TEMPLAX_ROOT . "/Source/QueryParser.php" );
 require_once( TEMPLAX_ROOT . "/Source/RuleParser.php" );
 
+// models
 require_once( TEMPLAX_ROOT . "/Source/Models/Query.php" );
 require_once( TEMPLAX_ROOT . "/Source/Models/ParsingSet.php" );
 
 //_____________________________________________________________________________________________
-class Templax {
+// templax - the render engine/framework
+class Templax extends Source\TemplateManager {
 
 	/**
-	 * the template manager
+	 * instance of the framework
 	 * 
-	 * @var \Templax\Source\TemplateManager|null
+	 * @var \Templax\Templax
 	 */
-	static public $tManager = null;
+	static public $instance = null;
 
 	/**
 	 * the process manager
 	 * 
 	 * @var \Templax\Source\ProcessManager|null
 	 */
-	static public $pManager = null;
+	private $pManager = null;
 
 	/**
 	 * the rule parser
 	 * 
 	 * @var \Templax\Source\RuleParser|null
 	 */
-	static public $rParser = null;
+	public $rParser = null;
 
 	/**
 	 * query parser
 	 * 
 	 * @var \Templax\Source\QueryParser|null
 	 */
-	static public $qParser = null;
+	public $qParser = null;
 
 	/**
 	 * defaults parsing set
 	 * 
 	 * @var \Templax\Source\Models\ParsingSet|null
 	 */
-	static private $baseParsingSet;
+	private $baseParsingSet;
 
 	/**
-	 * describes wether a template is currently process or not
+	 * describes wether a template is currently processing or not
 	 * 
 	 * @var boolean
 	 */
-	static private $processing;
+	private $processing;
 
 	/**
 	 * describes wether Templax is initialized or not
@@ -81,31 +88,24 @@ class Templax {
 	static private $initialized;
 
 	/**
-	 * no construction needed since Templax is a static one
+	 * construction
 	 */
-	private function __construct() {}
+	public function __construct() {
 
-	/**
-	 * extracts, removes and returns an item from the array by reference
-	 * 
-	 * @param array &$markup - the markup
-	 * 
-	 * @return array - the options
-	 */
-	static public function _custom_array_remove( array &$array, $key ) {
+		parent::__construct();
 
-		// check if exists, copy and return item
-		if ( array_key_exists($key, $array) ) {
+		if ( is_null(self::$instance) )
+			self::$instance = $this;
+		
+		// create instances
+		$this->pManager = new Source\ProcessManager();
+		$this->rParser = new Source\RuleParser();
+		$this->qParser = new Source\QueryParser();
 
-			$var = $array[$key];
+		$this->baseParsingSet = new Models\ParsingSet( new Models\Template(null, "") );
 
-			unset($array[$key]);
-
-			return $var;
-		}
-
-		// else null..
-		return null;
+		$this->initialized = false;
+		$this->processing = false;
 	}
 
 	/**
@@ -120,25 +120,18 @@ class Templax {
 	 * 
 	 * @return boolean
 	 */
-	static public function Init( array $templates = array(), array $markup = array(), array $options = array() ) {
-		
-		// create instances
-		self::$pManager = new Source\ProcessManager();
-		self::$tManager = new Source\TemplateManager( $templates );
-		self::$rParser = new Source\RuleParser();
-		self::$qParser = new Source\QueryParser();
+	public function Init( array $templates = array(), array $markup = array(), array $options = array() ) {
 
-		// define base parsing set for backup
-		self::$baseParsingSet = new Models\ParsingSet(
-			new Models\Template( null, "" ),
-			$markup,
-			$options,
-			null
-		);
+		$this->registerTemplateSet( $templates );
+		
+		// overwrite base parsing set configurations
+		$this->baseParsingSet->merge( null, array(
+			"markup" => new Classes\ParameterBag( $markup ),
+			"options" => new Classes\ParameterBag( $options )
+		));
 
 		// finish
-		self::$initialized = true;
-		self::$processing = false;
+		$this->initialized = true;
 
 		return true;
 	}
@@ -152,30 +145,29 @@ class Templax {
 	 * 
 	 * @return string
 	 */
-	static public function parse( $source, array $markup = array(), array $hooks = array(), Models\Process $parent = null ){
-
+	public function parse( $source, array $markup = null, array $hooks = null, Models\Process $parent = null ){
+		
 		// when not initialized several functionalities would'nt work
-		if ( !self::$initialized )
+		if ( !$this->initialized )
 			throw new \Exception( "Templax: initialize system first before parsing a template @see Templax::Init(...)" );
 
 		// when no main process exists start the parsing run
-		if ( !self::$pManager->mainProcessExists() )
-			self::start( $hooks );
+		if ( !$this->pManager->mainProcessExists() )
+			$this->start( (array) $hooks );
 
 		// extract options before creating set because the markup gets the "_options" removed
 		// its cleaner when looking at the markup and not seeing the "_options" index
-		$options = (array) self::_custom_array_remove($markup, "_options");
-		$set = new Models\ParsingSet($source, $markup, $options, $parent );
+		$options = (array) Classes\Miscellaneous::array_remove( (array) $markup, "_options" );
+		$set = new Models\ParsingSet( $source, (array) $markup, $options, $parent );
 
 		// process template
-		$content = self::processTemplate( $set, function($query) {
-
-			return self::$qParser->parse( $query );
+		$content = $this->processTemplate( $set, function($query) {
+			return $this->qParser->parse( $query );
 		});
 
 		// when the main process is deleted shut down the parser
-		if ( !self::$pManager->mainProcessExists() )
-			self::shutdown();
+		if ( !$this->pManager->mainProcessExists() )
+			$this->shutdown();
 
 		return $content;
 	}
@@ -190,24 +182,24 @@ class Templax {
 	 * 
 	 * @return string
 	 */
-	static public function processTemplate( Models\ParsingSet $pSet, callable $callback = null) {
+	public function processTemplate( Models\ParsingSet $pSet, callable $callback = null) {
 		
 		// if invalid parsing set no parsing will happen
 		if ( !$pSet->verify() )
 			throw new \Exception( "Templax: invalid parsing set. Check the template definition" );
 
 		// create new process
-		$process = self::$pManager->create( $pSet );
+		$process = $this->pManager->create( $pSet );
 
 		// create query markup from merged user over base markup
-		$process->rMergeMarkup( self::$baseParsingSet->getMarkup() );
+		$process->rMerge("markup", $this->baseParsingSet->all("markup") );
 
 		// when no rendering is allowed
-		if ( !$process->getOption("render") )
+		if ( !$process->get(["options", "render"]) )
 			return "";
 		
 		// function values
-		$queryingTemplate = $pSet->getTemplate()->getValue();
+		$queryingTemplate = $pSet->get(["template", "value"]);
 		$content = "";
 		$offset = 0;
 		$lastIterator = $offset;
@@ -219,46 +211,54 @@ class Templax {
 			// store current iterator
 			$iterator = $rawRule[0][1];
 			
-			$rule = self::$rParser->parse( $process, $rawRule[0][0] );
+			$rule = $this->rParser->parse( $process, $rawRule[0][0] );
 
 			// to avoid conflicts width post query request only the content
 			// in the current context will be passed
-			$query = new Models\Query( $process, $rule, substr($queryingTemplate, $offset), null );
+			$query = new Models\Query( $process, $rule, substr($queryingTemplate, $offset) );
 
-			$process->setCurrentQuery( $query );
+			$process->set("currentQuery", $query );
 			
 			// get response and review
-			$response = ( $callback( $query ) )->review( $process );			
+			$response = ( $callback($query) )->review( $process );
+
+			// store possible data cache and update process
+			if ( !$response->isNull("dataCache") ) {
+				
+				$this->pManager->getDataCache()->merge( null, $response->all("dataCache") );
+				$this->pManager->updateProcess( $process );
+			}
 
 			// adjust offset to ensure to not parse any post queries or unecessary strings
 			// when a postquery is set usually a offset is defined - so consinder that one too
-			$offset = $iterator + ( ($response->hasOffset()) ? $response->offset : strlen($response->getReplacement()) );
+			$offset = $iterator + (!$response->isNull("indexOffset") ? $response->get("indexOffset") : strlen($response->get("replacement")) );
 
 			// to ensure that we replace only rules for a specific scope we need to extract
 			// that specific scope and only replace the rule within the scope in the template
 			// in other words - the substring only belongs to the currently parsed rule
 			// while still containing other string elements like html tags or xml etc.
-			$response->setContext( substr($queryingTemplate, $lastIterator, ($iterator - $lastIterator) + strlen($response->getReplacement())) );
+			$response->set("context", substr($queryingTemplate, $lastIterator, ($iterator - $lastIterator) + strlen($response->get("replacement"))) );
 
 			// store last iterator to extract next context correctly
-			$lastIterator = $iterator + strlen( $response->getReplacement() );
+			$lastIterator = $iterator + strlen( $response->get("replacement") );
 
 			// process response and get the content piece of the current rule
-			$content .= self::processResponse( $response, $postQueries );
+			$content .= $this->processResponse( $response, $postQueries );
 		}
 
 		// process post queries
 		foreach( $postQueries as $index => $config ) {
+			
+			$response = $callback($config["query"])->review( $process );
 
-			$response = self::reviewResponse( $process, $callback( $config["query"] ) );
-			$content = str_replace( $config["placeholder"], $response->value, $content );
+			$content = str_replace( $config["identifier"], $response->getValue(), $content );
 		}
 
 		// attach the rest of the document
 		$content .= substr( $queryingTemplate, $offset );
 
 		// delete this process
-		self::$pManager->delete( $process );
+		$this->pManager->delete( $process );
 		
 		return $content;
 	}
@@ -271,28 +271,32 @@ class Templax {
 	 * 
 	 * @return string
 	 */
-	static private function processResponse( Models\Response $response, array &$postQueries = null ) {
+	private function processResponse( Models\Response $response, array &$postQueries = null ) {
 
 		// based on what query type the response returns the value for the replacement differs
 		// initialy its the regular value from the response
-		$replacementValue = $response->getValue();
+		$replacementValue = $response->get("value");
 
 		// alias
-		$query = $response->getPostQueryRef();
+		$query = $response->getRef("postQuery");
 
-		// when post query consider it to be parsed later on again
-		// and use a unique replacement value to identify and replace it later on
-		if ( $postQueries !== null ) {
+		// when its a post query replace current context with a unique identifier (placeholder)
+		// and parse it when all other rules in the current template parsing are parsed
+		if ( $postQueries !== null && !is_null($query) ) {
+			
+			// create identifier based on the rules iterator which always counts up
+			// this provides a definite unique value
+			$uid = "placeholder_" . str_replace("-", "_", $query->get("key")) . "_" . $this->rParser->getRuleIterator();
 
-			if ( !is_null($query) ) {
-				
-				$uid = "placeholder_" . str_replace("-", "_", $query->getKey()) . "_" . self::$rParser::getRuleIterator();
+			// define as post query and store for later parsing
+			$query->set( "isPostQuery", true );
 
-				if ( !is_null($postQueries) ) {
-					array_push($postQueries, array("placeholder" => $uid, "query" => $query) );
-					$replacementValue = $uid;
-				}
-			}
+			$postQueries[] = array(
+				"identifier" => $uid,
+				"query" => $query
+			);
+
+			$replacementValue = $uid;
 		}
 
 		// !! THE HEART LINE of this framework !! YEAAAAAH !!
@@ -303,8 +307,8 @@ class Templax {
 		// content is only replaced in the given context
 		// this is done like this because the str_replace function doesnt have a limiter
 		// nor has the grep_replace function the possibility to interpret html tags as regex
-		// so we need to define our own scope an assign the replaced content to the already parsed one
-		$content = str_replace( $response->getReplacement(), $replacementValue, $response->getContext() );
+		// so we need to define our own scope and assign the replaced content to the already parsed one
+		$content = str_replace( $response->get("replacement"), $replacementValue, $response->get("context") );
 
 		return $content;
 	}
@@ -314,9 +318,9 @@ class Templax {
 	 * 
 	 * @return boolean - true on success otherwise false
 	 */
-	static private function shutdown() {
+	private function shutdown() {
 
-		self::$rParser->shutdown();
+		$this->rParser->shutdown();
 
 		return true;
 	}
@@ -328,13 +332,13 @@ class Templax {
 	 * 
 	 * @return boolean
 	 */
-	static private function start( array $hooks = array() ) {
+	private function start( array $hooks = array() ) {
 
 		// start the rule parser
-		self::$rParser->start( $hooks );
+		$this->rParser->start( $hooks );
 
 		// finish with the processing state
-		self::$processing = true;
+		$this->processing = true;
 
 		return true;
 	}

@@ -53,8 +53,6 @@ class ParsingSet extends namespace\BaseProcessSet {
 				// check set existance
 				$func = "set" . ucfirst($key);
 
-				// var_dump($func, gettype($value) );
-
 				if ( method_exists($this, $func) )
 					$this->$func( $value );
 			}

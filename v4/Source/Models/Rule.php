@@ -11,55 +11,13 @@
 
 namespace Templax\Source\Models;
 
-use \Templax\Source;
+require_once( TEMPLAX_ROOT . "/Source/Models/BaseProcessSet.php" );
+require_once( TEMPLAX_ROOT . "/Source/Classes/Miscellaneous.php" );
 
-require_once( TEMPLAX_ROOT . "/Source/Miscellaneous.php" );
+use \Templax\Source\Classes;
 
 //_____________________________________________________________________________________________
 class Rule extends namespace\BaseProcessSet {
-
-	/**
-	 * rule id
-	 * 
-	 * @var int
-	 */
-	protected $id;
-
-	/**
-	 * contains the key - always in combination with the request
-	 * 
-	 * @var string|null
-	 */
-	protected $key;
-
-	/**
-	 * the rule thats been extracted from the template
-	 * 
-	 * @var string
-	 */
-	protected $rawRule;
-
-	/**
-	 * contains the request from this rule
-	 * null when no request is found
-	 * 
-	 * @var string|null
-	 */
-	protected $request;
-
-	/**
-	 * rule signature
-	 * 
-	 * @var string
-	 */
-	protected $signature;
-
-	/**
-	 * the value of this rule
-	 * 
-	 * @var mixed
-	 */
-	protected $value;
 
 	/**
 	 * construction
@@ -68,15 +26,27 @@ class Rule extends namespace\BaseProcessSet {
 	 * @param string $rawRule - the raw extracted rule
 	 * @param string|null $request - the request from the rule
 	 * @param string|null $key - the key - always in combination with a command
+	 * @param array $markup - current markup
+	 * @param array $options - rule options
 	 */
 	public function __construct( int $id, string $rawRule, ?string $request, ?string $key, array $markup = array(), array $options = array() ) {
 
-		parent::__construct( $markup, $options );
-
-		$this->id = $id;
-		$this->key = $key;
-		$this->rawRule = $rawRule;
-		$this->request = $request;
+		parent::__construct();
+		
+		$this->merge( null, array(
+			"id" => $id,
+			"key" => $key,
+			"rawRule" => $rawRule,
+			"request" => $request,
+			"markup" => new Classes\ParameterBag( $markup ),
+			"options" => new Classes\ParameterBag( $options ),
+			"signature" => null,
+			
+			"commandValue" => null,
+			"commandSignature" => null,
+			"prioKey" => null,
+			"value" => null
+		));
 	}
 
 	/**
@@ -84,50 +54,21 @@ class Rule extends namespace\BaseProcessSet {
 	 * 
 	 * @return mixed|null - null when no command value is present
 	 */
-	public function getCommandValue() {
-
-		if ( is_null($this->request) || is_null($this->key) )
-			return "";
+	public function commandValue() {
 		
-		return$this->markup[ $this->request . "-" . $this->key ];
+		return $this->get(["markup", $this->get("commandSignature") ]);
 	}
 
 	/**
-	 * returns the id
+	 * returns the command signature
+	 * under which key the value for the commands lies
 	 */
-	public function getId() {
+	public function commandSignature() {
 
-		return $this->id;
-	}
+		if ( $this->isNull("request") || $this->isNull("key") )
+			return "";
 
-	/**
-	 * returns the key
-	 * 
-	 * @return string
-	 */
-	public function getKey() {
-
-		return $this->key;
-	}
-
-	/**
-	 * returns the requested option
-	 * 
-	 * @return mixed
-	 */
-	public function getOption( $option ) {
-
-		return $this->options[ $option ];
-	}
-
-	/**
-	 * returns all options 
-	 * 
-	 * @return array
-	 */
-	public function getOptions() {
-
-		return $this->options;
+		return $this->get( "request" ) . "-" . $this->get( "key" );
 	}
 
 	/**
@@ -135,29 +76,9 @@ class Rule extends namespace\BaseProcessSet {
 	 * 
 	 * @return string|null - null when the key nor the request is given
 	 */
-	public function getPrioKey() {
-
-		return ( !is_null($this->key) ) ? $this->key : $this->request;
-	}
-
-	/**
-	 * returns the raw rule
-	 * 
-	 * @return string
-	 */
-	public function getRawRule() {
-
-		return $this->rawRule;
-	}
-
-	/**
-	 * returns the request
-	 * 
-	 * @return string
-	 */
-	public function getRequest() {
-
-		return $this->request;
+	public function prioKey() {
+		
+		return ( !$this->isNull("key") ) ? $this->get( "key" ) : $this->get( "request" );
 	}
 
 	/**
@@ -175,8 +96,8 @@ class Rule extends namespace\BaseProcessSet {
 
 		// return cached signature when not forced to rebuild
 		// or when no process is passed simply return this signature because we have nothing else
-		if ( !$rebuild && !is_null($this->signature) && !is_null($contextId) || is_null($process) )
-			return $this->signature;
+		if ( !$rebuild && !$this->isNull( "signature" ) && !is_null($contextId) || is_null($process) )
+			return $this->get( "signature" );
 
 		// the signature is built out of a root template
 		// the possible template id ( when not the root template itself )
@@ -184,25 +105,25 @@ class Rule extends namespace\BaseProcessSet {
 		$signature = array();
 		
 		// the root template
-		$signature["root"] = $process->getNextRootTemplate()->getId();
+		$signature["root"] = $process->getNextRootTemplate()->get( "id" );
 
 		// include the query key when defined but from the parent
 		// cause at this point no query is declared
-		$parent = $process->getParent();
+		$parent = $process->get( "parentProcess" );
 
 		// when parent exists add the parent
-		if ( !is_null($parent) )
-			$signature["parent"] = $process->getParent()->getCurrentQuery()->getKey();
+		if ( !$process->isNull( "parentProcess") )
+			$signature["parent"] = $parent->get([ "currentQuery", "key" ]);
 		
 		// the possible template id
-		$tid = $process->getTemplate()->getId();
+		$tid = $process->get( ["template", "id"] );
 
 		// only when its not the root or empty
 		if ( $tid != $signature["root"] && (string) $tid != "" )
 			$signature["tid"] = $tid;
 		
 		// prio key
-		$signature["prio"] = $this->getPrioKey();
+		$signature["prio"] = $this->get( "prioKey" );
 
 		// include the context id but return before caching
 		// because this is a different context / this is not the rule context
@@ -212,9 +133,9 @@ class Rule extends namespace\BaseProcessSet {
 
 		// cache but not when the context id is given
 		// its a special case
-		$this->signature = implode( "_", $signature );
+		$this->set( "signature" , implode("_", $signature) );
 		
-		return $this->signature;
+		return $this->get( "signature" );
 	}
 
 	/**
@@ -222,23 +143,13 @@ class Rule extends namespace\BaseProcessSet {
 	 * 
 	 * @return mixed
 	 */
-	public function getValue() {
-
-		// when the value is defined return that one
-		if ( !is_null($this->value) )
-			return Source\Miscellaneous::resolveValues( $this->value );
+	public function value( $value ) {
 		
-		return Source\Miscellaneous::resolveValues( $this->markup[$this->getPrioKey()] );
-	}
+		// when the value is defined return that one
+		if ( !is_null($value) )
+			return Classes\Miscellaneous::resolveValues( $value );
 
-	/**
-	 * sets the value
-	 * 
-	 * @var mixed
-	 */
-	public function setValue( $value ) {
-
-		$this->value = $value;
+		return Classes\Miscellaneous::resolveValues( $this->get(["markup", $this->get("prioKey")]) );
 	}
 }
 

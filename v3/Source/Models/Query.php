@@ -31,18 +31,16 @@ class Query extends namespace\Rule {
 	private $context;
 
 	/**
-	 * post querry
-	 * 
-	 * @var \Templax\Source\Models\Query
+	 * defines wether this query is a post query
 	 */
-	private $postQuery;
+	private $isPostQuery;
 
 	/**
-	 * the template context of the current query
+	 * post query data to pass data through rule parsing
 	 * 
 	 * @var null|string
 	 */
-	// private $queryContext;
+	static private $cacheData;
 
 	/**
 	 * construction
@@ -52,12 +50,8 @@ class Query extends namespace\Rule {
 	 * @param string $context - the context from the template for the current rule
 	 * @param \Templax\Source\Models\Query $postQuery - post query
 	 */
-	public function __construct(
-		namespace\Process $process,
-		namespace\Rule $rule,
-		string $context,
-		namespace\Query $postQuery = null )
-	{		
+	public function __construct( namespace\Process $process, namespace\Rule $rule, string $context, $isPostQuery = false ) {		
+
 		// parent "rule" construction
 		parent::__construct( $rule->getId(), $rule->getRawRule(), $rule->getRequest(), $rule->getKey(), $rule->getMarkup(), $rule->getOptions() );
 		$this->value = $rule->getValue();
@@ -65,8 +59,7 @@ class Query extends namespace\Rule {
 		// query constructions
 		$this->process = $process;
 		$this->context = $context;
-		$this->postQuery = $postQuery;
-		// $this->queryContext = "";
+		$this->isPostQuery = $isPostQuery;
 	}
 
 	/**
@@ -94,14 +87,54 @@ class Query extends namespace\Rule {
 	 * 
 	 * @return \Templax\Source\Models\null
 	 */
-	public function getPostQuery() {
+	public function isPostQuery() {
 
-		return $this->postQuery;
+		return $this->isPostQuery;
 	}
 
 	/**
-	 * returns the queryContext
+	 * defines the post query state
+	 * 
+	 * @param boolean $state - the state
+	 * 
+	 * @return $this
 	 */
+	public function setIsPostQuery( bool $state ) {
+
+		$this->isPostQuery = $state;
+
+		return $this;
+	}
+
+	/**
+	 * sets cache data
+	 * 
+	 * @param string $key - the cache key
+	 * @param mixed|!object - the value
+	 * 
+	 * @return $this
+	 */
+	public function setCacheData( string $key, $value ) {
+
+		$this->cacheData[ $key ] = $value;
+
+		return $this;
+	}
+
+	/**
+	 * returns requested cache data
+	 * 
+	 * @param string $key - the cache data key
+	 * 
+	 * @return mixed|null - the value or null when not found
+	 */
+	public function getCacheData( string $key = "" ) {
+
+		if ( empty($key) )
+			return $this->cacheData;
+
+		return $this->cacheData[ $key ];
+	}
 }
 
 //_____________________________________________________________________________________________

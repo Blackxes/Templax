@@ -29,6 +29,13 @@ class Process extends namespace\ParsingSet {
 	 * @var int
 	 */
 	private $id;
+
+	/**
+	 * defines wether this process is the main process
+	 * 
+	 * @var boolean
+	 */
+	private $isMainProcess;
 	
 	/**
 	 * construction
@@ -36,13 +43,12 @@ class Process extends namespace\ParsingSet {
 	 * @param int $id - process id
 	 * @param \Templax\Source\Models\ParsingSet $set - the set for the template processing
 	 */
-	public function __construct( int $id, namespace\ParsingSet $set ) {
+	public function __construct( int $id, namespace\ParsingSet $set, bool $isMainProcess, int $level ) {
 
 		parent::__construct( $set );
 
-		// var_dump($this->parent);
-
 		$this->id = $id;
+		$this->isMainProcess = $isMainProcess;
 		
 		// premerge the defaults
 		$this->rMergeOptions( $GLOBALS["Templax"]["Defaults"]["Process"]["BaseOptions"] );
@@ -116,9 +122,8 @@ class Process extends namespace\ParsingSet {
 	 * @return boolean
 	 */
 	public function isMainProcess() {
-
-		// the main process has always the id 0
-		return !( (bool) $this->id );
+		
+		return $this->isMainProcess;
 	}
 
 	/**

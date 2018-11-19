@@ -12,12 +12,22 @@
 /*********************************************************************************************/
 
 // require_once ( "../../Dependencies/Logfile/Logfile.php" );
-require_once ( "../../Templax/Templax.php" );
+require_once ( "../../v4/Templax.php" );
 
 //_____________________________________________________________________________________________
 
+	echo '<pre>';
+
 	// load template
-	\Templax\Templax::Init( array("base" => __DIR__ . "/index.html") );
+	$parser = new \Templax\Templax();
+	$parser->Init( array(
+		"base" => array(
+			"file" => __DIR__ . "/index.html",
+			"markup" => array(
+				"page-title" => "wusa"
+			)
+		)
+	));
 
 	$markup = array(
 		"page-title" => "Basic Marker Use",
@@ -30,7 +40,9 @@ require_once ( "../../Templax/Templax.php" );
 		"base_page-title" => "Hook title"
 	);
 
-	$content = \Templax\Templax::parse( "base", $markup, $hooks );
+	$content = $parser->parse( "base", $markup, $hooks );
+
+	echo '</pre>';
 	echo $content;
 
 //_____________________________________________________________________________________________

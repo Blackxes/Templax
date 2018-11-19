@@ -11,31 +11,32 @@
 
 /*********************************************************************************************/
 
-// require_once ( "../../Dependencies/Logfile/Logfile.php" );
-require_once ( "../../Templax/Templax.php" );
+require_once ( __DIR__ . "/../../v4/Templax.php" );
 
 //_____________________________________________________________________________________________
+	// parser instance
+	$parser = new \Templax\Templax();
 
 	// load template
-	\Templax\Templax::Init(
+	$parser->Init(
 		array(
 			"base" => __DIR__ . "/index.html",
 		)
 	);
 
 	$markup = array(
-		"health" => true,
-		"if-health" => array(
-			"armor" => "450",
-			"wusa" => "null Wusa"
+		"offense" => null,
+		"defense" => true,
+		"if-defense" => array(
+			"health" => "450",
 		),
-		"if-damage" => array(
-			"wow" => "sick"
+		"if-offense" => array(
+			"damage" => 30
 		),
-		"damage" => "true"
+		
 	);
 
-	$content = \Templax\Templax::parse( "base", $markup );
+	$content = $parser->parse( "base", $markup );
 	echo $content;
 
 //_____________________________________________________________________________________________

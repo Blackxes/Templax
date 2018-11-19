@@ -13,8 +13,6 @@ namespace Templax\Source;
 
 use \Templax\Source\Models;
 
-require_once( TEMPLAX_ROOT . "/Source/Miscellaneous.php" );
-
 //_____________________________________________________________________________________________
 class RuleParser {
 
@@ -30,14 +28,14 @@ class RuleParser {
 	 * 
 	 * @var array
 	 */
-	static private $hooks;
+	private $hooks;
 
 	/**
 	 * describes the initialization state of the parser
 	 * 
 	 * @var boolean
 	 */
-	static private $initialized;
+	private $initialized;
 
 	/**
 	 * internal rule iterator
@@ -45,14 +43,14 @@ class RuleParser {
 	 * 
 	 * @var int
 	 */
-	static private $rIterator = 0;
+	private $rIterator = 0;
 
 	/**
 	 * construction
 	 */
 	public function __construct() {
 
-		$this->hooks = array();
+		$this->hooks = new \ParameterBag();
 		$this->baseOptions = $GLOBALS["Templax"]["Defaults"]["Rules"]["BaseOptions"];
 	}
 	
@@ -108,7 +106,7 @@ class RuleParser {
 	 */
 	public function getHooks() {
 
-		return self::$hooks;
+		return $this->hooks;
 	}
 
 	/**

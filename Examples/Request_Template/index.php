@@ -11,13 +11,14 @@
 
 /*********************************************************************************************/
 
-// require_once ( "../../Dependencies/Logfile/Logfile.php" );
-require_once ( "../../Templax/Templax.php" );
+require_once ( __DIR__ . "/../../v4/Templax.php" );
 
 //_____________________________________________________________________________________________
+	// parser instance
+	$parser = new \Templax\Templax();
 
 	// load template
-	\Templax\Templax::Init(
+	$parser->Init(
 		array(
 			"base" => __DIR__ . "/index.html",
 			"placeholder"  => __DIR__ . "/placeholder.html",
@@ -30,7 +31,11 @@ require_once ( "../../Templax/Templax.php" );
 		)
 	);
 
-	$content = \Templax\Templax::parse( "base", $markup );
+	$hooks = array(
+		"placeholder_placeholder_marker" => "Wusa"
+	);
+
+	$content = $parser->parse( "base", $markup, $hooks );
 	echo $content;
 
 //_____________________________________________________________________________________________

@@ -7,14 +7,24 @@
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 </head>
 <body>
-	<h3>Select Template</h3>
-	
-	{{ templateSelect: login-status }}
+	<h3>Multiple Template Parsing</h3>
+	<hr />
 
+		{{ templateSelect: login-status }}
+
+	<hr />
 	<a href="../../index.php">Table of Contents</a>
 </body>
 </html>
 ###BASE###
+
+###USER###
+<div class="user">
+	<p>{{ username }}</p>
+	<p>{{ lastname }}</p>
+	<p>Status: {{  }}</p>
+</div>
+###USER###
 
 ###LOGGED_IN###
 <p>User is logged in: {{ user }}</p>

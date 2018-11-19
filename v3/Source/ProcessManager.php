@@ -52,13 +52,17 @@ class ProcessManager {
 	 * @return \Templax\Source\Models\Process
 	 */
 	public function &create( \Templax\Source\Models\ParsingSet $set ) {
+
+		// exit;
 		
 		// manual adjustments
-		$process = new Models\Process( self::$pIterator, $set );
+		$process = new Models\Process( self::$pIterator, $set, !(bool) $this->getProcessCount() );
 
 		// every process except the main process has a parent
 		if ( !$process->isMainProcess() )
 			$process->setParent( $set->getParent() );
+		else
+			$this->mainProcess = &$process;
 		
 		// register
 		$this->processes[ self::$pIterator ] = $process;
@@ -79,10 +83,15 @@ class ProcessManager {
 	 */
 	public function delete( $_id ) {
 		
-		// get id 
-		$id = is_a($_id, "\Templax\Source\Models\Process") ? $_id->getId() : $_id;
+		// get id
+		$id = is_a( $_id, "\Templax\Source\Models\Process" ) ? $_id->getId() : $_id;
 		
 		unset( $this->processes[$id] );
+
+		// delete main process when nothings left / the main process is always the last one
+		// when parsing a template
+		if ( !$this->getProcessCount() )
+			$this->mainProcess = null;
 		
 		return !$this->has($id);
 	}
@@ -138,12 +147,7 @@ class ProcessManager {
 	 */
 	public function has( int $id ) {
 
-		$a = isset( $this->processes[$id] );
-		$b = !is_null($this->processes[$id]);
-
-		return $a && $b;
-
-		// return  ;
+		return isset( $this->processes[$id] ) && !is_null( $this->processes[$id] );
 	}
 
 	/**
@@ -154,7 +158,7 @@ class ProcessManager {
 	public function mainProcessExists() {
 
 		// the main process has always the id 0
-		return isset( $this->processes[0] );
+		return !is_null( $this->mainProcess );
 	}
 }
 

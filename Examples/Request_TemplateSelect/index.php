@@ -11,13 +11,14 @@
 
 /*********************************************************************************************/
 
-// require_once ( "../../Dependencies/Logfile/Logfile.php" );
-require_once ( "../../Templax/Templax.php" );
+require_once ( __DIR__ . "/../../v4/Templax.php" );
 
 //_____________________________________________________________________________________________
+	// parser instance
+	$parser = new \Templax\Templax();
 
 	// load template
-	\Templax\Templax::Init(
+	$parser->Init(
 		array(
 			"base" => array( "file" => __DIR__ . "/index.html", "marker" => "base" ),
 			"logged_in" => array( "file" => __DIR__ . "/index.html", "marker" => "logged_in" ),
@@ -32,13 +33,13 @@ require_once ( "../../Templax/Templax.php" );
 	// when the template is not found an empty string is used
 	//
 	$markup = array(
-		"login-status" => "logged_in",
+		"login-status" => "logged_out",
 		"templateSelect-login-status" => array(
 			"user" => "Blackxes"
 		)
 	);
 
-	$content = \Templax\Templax::parse( "base", $markup );
+	$content = $parser->parse( "base", $markup );
 	echo $content;
 
 //_____________________________________________________________________________________________

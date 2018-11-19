@@ -8,15 +8,15 @@
 <body>
 	<h3>If test</h3>
 	
-	{{ if: damage }}
+	{{ if: offense }}
 		<p>Dont render</p>
-	{{ if end: damage }}
+		<p>damage: {{ damage }}</p>
+	{{ if end: offense }}
 
-	{{ if: health }}
+	{{ if: defense }}
 		<p>Render Please</p>
-		<p>{{ armor }}</p>
-		<p>{{ wusa }}</p>
-	{{ if end: health }}
+		<p>health: {{ health }}</p>
+	{{ if end: defense }}
 
 	<a href="../../index.php">Table of Contents</a>
 </body>
