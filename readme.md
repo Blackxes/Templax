@@ -19,10 +19,8 @@
 // adjust your path to the Templax.php
 require_once( "your/path/to/templax.php" );
 
-use \Templax\Templax;
-
-// initialize framework
-Templax::Init( array(
+// create and initialize framework
+$parser = (new \Templax\Templax)->Init( array(
     "template" => __DIR__ . "/index.html"
 ));
 
@@ -33,7 +31,7 @@ $markup = array(
 );
 
 // parse content
-$content = Templax::parse( "templax", $markup );
+$content = $parser->parse( "templax", $markup );
 
 echo $content;
 ```

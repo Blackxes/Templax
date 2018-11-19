@@ -133,7 +133,7 @@ class Templax extends Source\TemplateManager {
 		// finish
 		$this->initialized = true;
 
-		return true;
+		return $this;
 	}
 
 	/**
