@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+</head>
+<body>
+	<h3>If test</h3>
+	
+	{{ if: is_offense }}
+		<p>"If Offense"</p>
+		<p>Damage: {{ damage }}</p>
+	{{ if end: is_offense }}
+
+	{{ if: is_defense }}
+		<p>"If Defense"</p>
+		<p>Armor: {{ armor }}</p>
+	{{ if end: is_defense }}
+
+	<a href="../../index.php">Table of Contents</a>
+</body>
+</html>

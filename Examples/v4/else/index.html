@@ -1,0 +1,25 @@
+###BASE###
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+</head>
+<body>
+	<h3>Ifelse Command</h3>
+	<hr>
+	
+	{{ if: logged_in }}
+		<p>{{ message-when-logged }}</p>
+	{{ if end: logged_in }}
+
+	{{ else: logged_in }}
+		<p>{{ message-when-not }}</p>
+	{{ else end: logged_in }}
+
+	<hr>
+	<a href="../../index.php">Table of Contents</a>
+</body>
+</html>
+###BASE###

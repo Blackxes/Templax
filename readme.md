@@ -16,24 +16,28 @@
 ```
 
 ```php
-// index.php
+# index.php
 
-// adjust your path to the Templax.php
+# adjust your path to the Templax.php
 require_once( "your/path/to/templax.php" );
 
-// create and initialize framework
-$parser = (new \Templax\Templax)->Init( array(
-    "template" => __DIR__ . "/template.html"
-));
+# create and initialize framework
+$parser = (new \Templax\Templax)->init([
+    "options" => [ "file" => __DIR__ . "/template.html" ]
+]);
 
 // markup to define what values are used for the marker
-$markup = array(
+$markup = [
     "title" => "Templax",
     "content" => "my first template"
-);
+];
 
-// parse content
+# parse content
 $content = $parser->parse( "templax", $markup );
 
 echo $content;
 ```
+
+## Changelog
+
+[v4]  

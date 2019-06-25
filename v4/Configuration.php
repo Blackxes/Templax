@@ -23,7 +23,10 @@ $GLOBALS["Templax"]["Defaults"] = array(
 		"BaseOptions" => array(
 
 			// describes wether this rule will be rendered or not
-			"render" => true
+			"render" => true,
+			
+			// defines wether the following template shall be parsed or not
+			"parse" => true
 		)
 	),
 
@@ -44,7 +47,10 @@ $GLOBALS["Templax"]["Defaults"] = array(
 			//
 			// @see \Templax\Source\Models\Response
 			//
-			"callback" => null
+			"callback" => null,
+
+			// defines wether the following template shall be parsed or not
+			"parse" => true
 		)
 	)
 );
@@ -87,7 +93,7 @@ $GLOBALS["Templax"]["ExtractionRegex"] = array(
 			? array( "start" => "{{\s*{$key}\s*}}", "request" => $customKey, "key" => $customKey )
 			: array( "start" => $query->get("rawRule"), "request" => $query->get("request"), "key" => $query->get("key") );
 		
-		return "/{$range["start"]}(.*){{\s*{$range["request"]}\s+end\s*:\s*{$range["key"]}\s*}}/";
+		return "/{$range["start"]}(.*?){{\s*\/{$range["request"]}\s*:\s*{$range["key"]}\s*}}/";
 	}
 );
 

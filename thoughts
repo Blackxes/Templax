@@ -21,3 +21,28 @@ parsing set
 // processes the parsing set into content
 ::processParsingSet( $pSet, $callback )
 @return string
+
+
+
+
+
+
+
+
+
+
+// IDEAS
+
+[template manager]
+	add different template registration
+
+	"template_file" => array(
+		"options" => array(),
+		"markup" => array(),
+		"templates" => array(
+			"marker_of_template_1" => array() // configuration,
+			"marker_of_template_2" => array() // configuration,
+			"marker_of_template_3" => array() // configuration,
+			etc..
+		)
+	)

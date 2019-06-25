@@ -1,6 +1,4 @@
-###BASE###
-<!DOCTYPE html>
-<html lang="de">
+<html>
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,57 +16,9 @@
 		</style>
 	</head>
 	<body>
-		{{ templateSelect: content }}
+		<div id="app">
+			<h1>Templax examples - V%s</h1>
+			<ul>%s</ul>
+		</div>
 	</body>
 </html>
-###BASE###
-
-###EXAMPLES###
-<div id="app">
-	<h1>Templax examples</h1>
-	<ul>
-	{{ foreach: examples }}
-		<li>
-			<a href="{{ path }}">{{ title }}</a>
-		</li>
-	{{ foreach end: examples }}
-	</ul>
-</div>
-###EXAMPLES###
-
-###TESTS###
-<div id="app">
-<h1>Tests</h1>
-<ul>
-	{{ foreach: tests }}
-	<li><a href="{{ link }}">{{ label }}</a></li>
-	{{ foreach end: tests }}
-</ul>
-</div>
-###TESTS###
-
-<!-- tests templates -->
-###T_MARKER###
-<div class="request-none">
-	{{ marker }}
-</p>
-###T_MARKER###
-
-###T_TEMPLATE###
-<div class="request-template">
-	{{ template: key }}
-</div>
-###T_TEMPLATE###
-
-###T_TEMPLATESELECT###
-<div class="request-template-select">
-	{{ templateSelect: key }}
-</div>
-###T_TEMPLATESELECT###
-
-###T_FOREACH###
-<div class="request-foreach">
-	{{ foreach: items }}
-	{{ foreach end: items }}
-</div>
-###T_FOREACH###

@@ -15,8 +15,6 @@ use \Templax\Source;
 use \Templax\Source\Models;
 use \Templax\Source\Classes;
 
-error_reporting( E_ALL & ~E_NOTICE );
-
 define( "TEMPLAX_ROOT", __DIR__, true );
 
 // Basics
@@ -37,6 +35,14 @@ require_once( TEMPLAX_ROOT . "/Source/Models/ParsingSet.php" );
 //_____________________________________________________________________________________________
 // templax - the render engine/framework
 class Templax extends Source\TemplateManager {
+
+	/**
+	 * defines wether the framework has been booted or not
+	 * it only can be booted once
+	 * 
+	 * @var boolean
+	 */
+	static private $booted;
 
 	/**
 	 * instance of the framework
@@ -81,21 +87,19 @@ class Templax extends Source\TemplateManager {
 	private $processing;
 
 	/**
-	 * describes wether Templax is initialized or not
-	 * 
-	 * @var boolean
-	 */
-	static private $initialized;
-
-	/**
 	 * construction
 	 */
 	public function __construct() {
 
-		parent::__construct();
+		parent::__construct( $templates );
 
-		if ( is_null(self::$instance) )
-			self::$instance = $this;
+		// check if booting was successful
+		if ( !static::$booted )
+			throw new \Exception( "Templax: automatic booting of system was not successful. Try to boot it manually by calling \Templax\Templax::boot()" );
+		
+		// when post booting the instance shall always remain the same
+		if ( !is_null(static::$instance) )
+			return $this->fromInstance( static::$instance );
 		
 		// create instances
 		$this->pManager = new Source\ProcessManager();
@@ -104,8 +108,41 @@ class Templax extends Source\TemplateManager {
 
 		$this->baseParsingSet = new Models\ParsingSet( new Models\Template(null, "") );
 
-		$this->initialized = false;
 		$this->processing = false;
+	}
+
+	/**
+	 * initially defines the framework
+	 * 
+	 * @return boolean - true on success else false
+	 */
+	static public function boot() {
+
+		if ( !is_null(static::$booted) )
+			return true;
+		
+		static::$booted = true;
+		static::$instance = new \Templax\Templax();
+
+		return true;
+	}
+
+	/**
+	 * initializes this instance from another one
+	 */
+	public function fromInstance( \Templax\Templax $rhs ) {
+
+		$this->pManager = $rhs->pManager;
+		$this->rParser = $rhs->rParser;
+		$this->qParser = $rhs->qParser;
+
+		$this->baseParsingSet = $rhs->baseParsingSet;
+		$this->processing = $rhs->processing;
+
+		// update instance
+		static::$instance->merge( null, $this->all() );
+
+		return $this;
 	}
 
 	/**
@@ -157,8 +194,8 @@ class Templax extends Source\TemplateManager {
 
 		// extract options before creating set because the markup gets the "_options" removed
 		// its cleaner when looking at the markup and not seeing the "_options" index
-		$options = (array) Classes\Miscellaneous::array_remove( (array) $markup, "_options" );
-		$set = new Models\ParsingSet( $source, (array) $markup, $options, $parent );
+		$options = (array) Classes\Miscellaneous::array_remove( $markup, "_options" );
+		$set = new Models\ParsingSet( $source, $markup, $options, $parent );
 
 		// process template
 		$content = $this->processTemplate( $set, function($query) {
@@ -251,7 +288,7 @@ class Templax extends Source\TemplateManager {
 			
 			$response = $callback($config["query"])->review( $process );
 
-			$content = str_replace( $config["identifier"], $response->getValue(), $content );
+			$content = str_replace( $config["identifier"], $response->get("value"), $content );
 		}
 
 		// attach the rest of the document
@@ -343,6 +380,10 @@ class Templax extends Source\TemplateManager {
 		return true;
 	}
 }
+
+//_____________________________________________________________________________________________
+// pre initialize
+\Templax\Templax::boot();
 
 //_____________________________________________________________________________________________
 //
