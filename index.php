@@ -10,13 +10,6 @@
 error_reporting( E_ALL & ~E_NOTICE );
 ini_set( "display_errors", true );
 
-// require_once( __DIR__ . "/Test/TestTemplax.php" );
-
-# run test
-// ( new TemplaxTest() )->run( $_GET["v"] );
-
-# exit
-
 # get example list
 $v = "5";
 $list = preg_grep("/^\./", scandir("./Examples/v{$v}"), PREG_GREP_INVERT );
